@@ -1,0 +1,4 @@
+[submodule "OneBranch"]
+	path = OneBranch
+	url = https://msazure.visualstudio.com/One/_git/Submodules-OneBranch-MSBuild
+	branch = release

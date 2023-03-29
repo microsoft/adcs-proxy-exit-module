@@ -1,0 +1,36 @@
+{
+    "tool":"Credential Scanner",
+    "suppressions":[
+        {
+            "file":[
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_App_Test_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_App_Test_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_HAL_Extension_Test_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_HAL_Extension_Test_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Intermediate_Cert.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Intermediate_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Intermediate_FFU_Cert.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Intermediate_FFU_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_PPL_Test_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_PPL_Test_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_PP_Test_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_PP_Test_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Root_CA.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Root_CA_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Test_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Test_Cert_2017.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Test_PK_Cert_2013.pfx",
+                    "packages\\Kits.10.0.18362.1\\tools\\Tools\\certificates\\OEM_Test_PK_Cert_2017.pfx"
+            ],
+            "_justification":"These secrets are froma 3rd party package"
+        },
+        {
+            "file":[
+                    "out\\release-x64\\Voting\\VotingWebPkg\\Code\\wwwroot\\lib\\angular\\angular.js",
+                    "src\\Samples\\ServiceFabric\\VotingWeb\\obj\\release\\net461\\win7-x64\\PubTmp\\Out\\wwwroot\\lib\\angular\\angular.js",
+                    "src\\Samples\\ServiceFabric\\VotingWeb\\wwwroot\\lib\\angular\\angular.js"
+            ],
+            "_justification":"These secrets are used as samples"
+        }
+    ]
+}

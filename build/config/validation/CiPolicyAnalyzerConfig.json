@@ -1,0 +1,12 @@
+{
+    "OmitExtensions":  [
+      ".js"
+    ],
+    "OmitFiles": [
+      "release-x64\\*\\ref\\*.dll",
+      "release-x64\\*\\ref\\*.exe"
+    ],
+    "OmitPaths": [
+      "loc"
+    ]
+}

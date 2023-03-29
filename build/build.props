@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Default CBT global to this directory if not specified -->
+    <LocalBuildExtensionsPath>$(EnlistmentRoot)\build\local\Extensions</LocalBuildExtensionsPath>
+    <Configuration Condition=" '$(Configuration)' == '' And '$(DefaultProjectConfiguration)' != '' ">$(DefaultProjectConfiguration)</Configuration>
+    <Platform Condition=" '$(Platform)' == '' And '$(DefaultProjectPlatform)' != '' ">$(DefaultProjectPlatform)</Platform>
+  </PropertyGroup>
+
+<!-- a default TargetFramework has to be set but for nuget restore of dirs.proj but this an be overridden per project -->
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+
+  <Import Project="$(LocalBuildExtensionsPath)\Before.$(MSBuildThisFile)" Condition=" '$(LocalBuildExtensionsPath)' != '' And Exists('$(LocalBuildExtensionsPath)\Before.$(MSBuildThisFile)') " />
+
+  <Import Project="$(LocalBuildExtensionsPath)\After.$(MSBuildThisFile)" Condition=" '$(LocalBuildExtensionsPath)' != '' And Exists('$(LocalBuildExtensionsPath)\After.$(MSBuildThisFile)') " />
+
+  <Import Project="$(EnlistmentRoot)\OneBranch\Modules\OneBranch.props" Condition="Exists('$(EnlistmentRoot)\OneBranch\Modules\OneBranch.props')" />
+</Project>

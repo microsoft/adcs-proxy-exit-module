@@ -1,0 +1,28 @@
+using namespace System::Reflection;
+using namespace System::Runtime::CompilerServices;
+
+//
+// if you want to use a private version file and customize this, see
+// file://samsndrop02/CoreXT-Latest/docs/corext/corext/version.htm
+//
+
+[assembly: AssemblyVersion("1.1.0.343")];
+
+[assembly: AssemblyCompany("Microsoft Corp.")];
+[assembly: AssemblyProduct("Microsoft Account")];
+[assembly: AssemblyCopyright("2020")];
+
+
+
+#if ENABLE_CODESIGN
+#if !(BUILD_NO_GLOBAL_STRONG_NAME)
+#if ENABLE_PRS_DELAYSIGN
+[assembly: AssemblyDelaySign(true)];
+[assembly: AssemblyKeyFile("%CODESIGN_KEY:\=\\%")];
+#else
+[assembly: AssemblyKeyFile("%CODESIGN_TESTKEY:\=\\%")];
+[assembly: AssemblyKeyName("")];
+[assembly: AssemblyDelaySign(false)];
+#endif
+#endif
+#endif

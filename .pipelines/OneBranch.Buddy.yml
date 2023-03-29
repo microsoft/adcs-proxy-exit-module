@@ -1,0 +1,177 @@
+#################################################################################
+#                           Onebranch Retail Pipeline                           #
+# This pipeline was created by EasyStart from a sample located at:              #
+#   https://aka.ms/obpipelines/easystart/samples                                #
+# Documentation:  https://aka.ms/obpipelines                                    #
+# Yaml Schema:    https://aka.ms/obpipelines/yaml/schema                        #
+# Retail Tasks:   https://aka.ms/obpipelines/tasks                              #
+# Support:        https://aka.ms/onebranchsup                                   #
+#################################################################################
+
+trigger: none # https://aka.ms/obpipelines/triggers
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: false
+
+variables:
+  CDP_DEFINITION_BUILD_COUNT: $[counter('', 0)] # needed for onebranch.pipeline.version task https://aka.ms/obpipelines/versioning
+  system.debug: true
+  ENABLE_PRS_DELAYSIGN: 1
+  ROOT: $(Build.SourcesDirectory)
+  REPOROOT: $(Build.SourcesDirectory)
+  OUTPUTROOT: $(REPOROOT)\out
+  NUGET_XMLDOC_MODE: none
+  NUGET_PACKAGES: '$(Agent.WorkFolder)\.nuget'
+
+  # 4.8 SDK: mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+  # mcr.microsoft.com/dotnet/sdk:6.0-windowsservercore-ltsc2019
+
+  WindowsContainerImage: 'mcr.microsoft.com/windows/servercore:1809' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+
+  # Ref assemblies contain interfaces, not code (similar to header files), and can be exluded from signing
+  # Excluding javascript files because they are run in the browser and not in script host
+  ob_sdl_codeSignValidation_excludes: -|**\*.js;-|**\ref\**
+
+resources:
+  repositories: 
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    cloudvault: # https://aka.ms/obpipelines/cloudvault
+      enabled: false
+    globalSdl: # https://aka.ms/obpipelines/sdl
+      tsa:
+        enabled: false # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+      # credscan:
+      #   suppressionsFile: $(Build.SourcesDirectory)\.config\CredScanSuppressions.json
+      binskim:
+        scanOutputDirectoryOnly: true
+      policheck:
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+      # suppression:
+      #   suppressionFile: $(Build.SourcesDirectory)\.gdn\global.gdnsuppress
+
+    stages:
+    - stage: build
+      jobs:
+      - job: MsBuildTask
+        pool:
+          type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+        
+        variables:
+          ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+          ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
+          ob_sdl_cg_failOnAlert: false
+          ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}: # conditionally enable symbolsPublishing for master branch only
+            ob_symbolsPublishing_enabled: true # https://aka.ms/obpipelines/symbols
+          
+          # ob_sdl_suppression_suppressionFile: $(Build.SourcesDirectory)\.gdn\job.gdnsuppress
+
+        steps:
+          - task: UseDotNet@2
+            continueOnError: true
+            inputs:
+              packageType: 'sdk'
+              useGlobalJson: true
+              performMultiLevelLookup: true
+              
+          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
+            displayName: 'Setup BuildNumber'
+            inputs:
+              system: 'RevisionCounter'
+              major: '1'
+              minor: '0'
+              exclude_commit: true
+
+          - template: /SharedComponents/OneBranch/Steps/Prepare.MSBuild.yml@templates
+            parameters:
+              msBuildVersion: 17.0
+              msbuildInstallationPath: c:\.vs
+              includeReferenceAssemblies: 'true'
+              microsoftSdks:
+                - 'Azure/.NET SDK/v2.9'
+
+          - task: MSBuild@1
+            displayName: 'Build'
+            inputs:
+              solution: '$(Build.SourcesDirectory)\dirs.proj'
+              msbuildLocationMethod: 'location'
+              msbuildLocation: '$(MSBuildPath)'
+              platform: 'x64'
+              configuration: 'release'
+              msbuildArguments: '-bl:$(REPOROOT)\out\output.binlog /nr:false'
+              maximumCpuCount: true
+
+#          - task: onebranch.pipeline.signing@1 # https://aka.ms/obpipelines/signing
+#            displayName: 'Sign output'
+#            inputs:
+#              command: 'sign'
+#              signing_environment: 'azure-ado'
+#              files_to_sign: '**/*.exe;**/*.dll;**/*.ps1;**/*.psm1'
+#              search_root: '$(Build.SourcesDirectory)\out'
+
+
+
+
+      - job: InlineCommands
+        pool:
+          type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+        
+        variables:
+          ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+          ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
+          ob_sdl_cg_failOnAlert: false
+          ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}: # conditionally enable symbolsPublishing for master branch only
+            ob_symbolsPublishing_enabled: true # https://aka.ms/obpipelines/symbols
+          
+          # ob_sdl_suppression_suppressionFile: $(Build.SourcesDirectory)\.gdn\job.gdnsuppress
+
+        steps:
+          - task: UseDotNet@2
+            continueOnError: true
+            inputs:
+              packageType: 'sdk'
+              useGlobalJson: true
+              performMultiLevelLookup: true
+              
+          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
+            displayName: 'Setup BuildNumber'
+            inputs:
+              system: 'RevisionCounter'
+              major: '1'
+              minor: '0'
+              exclude_commit: true
+
+          - template: /SharedComponents/OneBranch/Steps/Prepare.MSBuild.yml@templates
+            parameters:
+              msBuildVersion: 17.0
+              msbuildInstallationPath: c:\.vs
+              includeReferenceAssemblies: 'true'
+              microsoftSdks:
+                - 'Azure/.NET SDK/v2.9'
+              
+          - task: Powershell@2
+            displayName: 'View Drop Size'
+            inputs:
+              targetType: 'inline'
+              script: |
+                (get-childitem c:\.vs | Measure-Object -Property Length -Sum).sum / 1Gb
+                msbuild $(Build.SourcesDirectory)\dirs.proj /p:configuration=release -bl:$(REPOROOT)\out\output.binlog /nr:false /p:Platform=x64
+              errorActionPreference: 'continue'
+
+          - task: Powershell@2
+            displayName: 'BuildScript'
+            inputs:
+              targetType: 'inline'
+              script: |
+                msbuild $(Build.SourcesDirectory)\dirs.proj /p:configuration=release -bl:$(REPOROOT)\out\output.binlog /nr:false /p:Platform=x64
+              errorActionPreference: 'continue'
+

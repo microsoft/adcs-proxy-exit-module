@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+
+    <_CopyFilesToStagingAfterTargets Condition=" '$(MSBuildProjectExtension)' == '.ccproj'">AfterBuild</_CopyFilesToStagingAfterTargets>
+    <_CopyFilesToStagingAfterTargets Condition=" '$(_CopyFilesToStagingAfterTargets)' == ''">CopyFilesToOutputDirectory</_CopyFilesToStagingAfterTargets>
+  </PropertyGroup>
+
+  <Target Name="CopyFilesToStagingOutputDirectory" 
+          AfterTargets="$(_CopyFilesToStagingAfterTargets)" 
+          Condition=" '$(StagingOutputRootPath)' != '' and '$(StagingOutputPath)' != '' ">
+    <ItemGroup>
+     <!-- Gather all files in the output directory recursively -->
+      <StagingFiles Include="$(TargetDir)\**" />
+    </ItemGroup>
+     <!-- Copy the build output to the drop staging location -->
+    <Copy
+        SourceFiles="@(StagingFiles)"
+        DestinationFolder="$(StagingOutputRootPath)$(StagingOutputPath)\%(RecursiveDir)"
+        SkipUnchangedFiles="$(SkipCopyUnchangedFiles)"
+        OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+        Retries="$(CopyRetryCount)"
+        RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+        UseHardlinksIfPossible="$(CreateHardLinksForCopyFilesToOutputDirectoryIfPossible)"
+        UseSymboliclinksIfPossible="$(CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible)">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+  </Target>
+
+</Project>
