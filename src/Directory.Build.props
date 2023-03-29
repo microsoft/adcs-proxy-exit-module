@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildThisFileDirectory)..', 'Directory.Build.props'))\Directory.Build.props" />
+
+  <PropertyGroup>
+    <CheckMSVCComponents>false</CheckMSVCComponents>
+    <OutIncludePath>$(OutputPath)include</OutIncludePath>
+    <VCToolsVersion Condition="'$(VCToolsVersion)' == '' or '$(VCToolsVersion)' == 'VCToolsVersion_is_not_defined'">14.31.31104</VCToolsVersion>
+    <VCInstallDir_150>$(EnlistmentRoot)\packages\VisualCppTools.$(VCToolsVersion)\lib\native</VCInstallDir_150>
+    <VCToolsInstallDir_150>$(VCInstallDir_150)</VCToolsInstallDir_150>
+  </PropertyGroup>
+
+  <!-- Use the Windows SDK from the "Kits" NuGet package -->
+  <!-- This NuGet package is officially supported by Windows and Visual Studio -->
+
+  <Import Project="$(EnlistmentRoot)\packages\Kits.10.0.18362.1\build\native\Kits.props"  Condition="Exists('$(EnlistmentRoot)\packages\Kits.10.0.18362.1\build\native\Kits.props')"/>
+  <Import Project="$(NugetPackageRoot)\Kits.10.0.18362.1\build\native\Kits.props"  Condition="Exists('$(NugetPackageRoot)\Kits.10.0.18362.1\build\native\Kits.props')"/>
+
+  <PropertyGroup>
+    <UniversalCRTSdkDir_10>$(UCRTContentRoot)</UniversalCRTSdkDir_10>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LocalSignFilesBeforeTarget>$(LocalSignFilesBeforeTarget);CopyFilesToStagingOutputDirectory</LocalSignFilesBeforeTarget>
+  </PropertyGroup>
+
+  <!-- Use the C++ Build Tools from the VisualCppTools package -->
+  <!-- Officially supported by the Visual Studio C++ team -->
+
+  <Import Project="$(EnlistmentRoot)\packages\VisualCppTools.$(VCToolsVersion)\build\native\VisualCppTools.props" Condition="Exists('$(EnlistmentRoot)\packages\VisualCppTools.$(VCToolsVersion)\build\native\VisualCppTools.props')" />
+
+
+  <!-- /guard:cf - enable guard for executable code in binaries on Release -->
+  <ItemDefinitionGroup Condition="('$(CLRSupport)' == '' or '$(CLRSupport)' == 'false') and ('$(Configuration)'=='Release') ">
+    <ClCompile>
+      <AdditionalOptions>/guard:cf %(AdditionalOptions)</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/guard:cf %(AdditionalOptions)</AdditionalOptions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
+
