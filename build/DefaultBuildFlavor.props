@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    
+    <Configuration Condition=" '$(Configuration)'=='' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)'=='' ">x64</Platform>
+    
+    <DebugType Condition=" '$(Configuration)'=='Debug' and '$(DebugType)'==''">full</DebugType>
+    <!--
+        Define helper properties to root folders for unified output 
+     -->
+    <CBTOutputRootDir Condition=" '$(CBT_UnifiedOutputRootDir)' != '' and '$(CBTOutputRootDir)' == '' ">$(CBT_UnifiedOutputRootDir)\$(Configuration)-$(Platform)</CBTOutputRootDir>
+    <BinariesBuildTypeArchDirectory Condition=" '$(CBTOutputRootDir)' != ''  and '$(BinariesBuildTypeArchDirectory)' == '' ">$(CBTOutputRootDir)</BinariesBuildTypeArchDirectory>
+
+    <!--
+        Redirect Output for BuildTracker builds using CBT.UnifiedOutputDir module package
+     -->
+    <CBTOverrideBaseOutputPath>$(CBTOutputRootDir)</CBTOverrideBaseOutputPath>
+    
+    <!--
+      The default destination for UnifiedOutput is the AssemblyName(csproj)/TargetName(vcxproj)
+      To use the MSBuildProjectName, set the following to true and uncomment
+    -->
+    <!--
+    <CBTUnifiedOutputDirUseProjectName>True</CBTUnifiedOutputDirUseProjectName>
+     -->
+  </PropertyGroup>
+</Project>

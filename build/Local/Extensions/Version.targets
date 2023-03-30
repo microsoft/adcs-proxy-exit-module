@@ -1,0 +1,233 @@
+<!-- Collecting version gemeration logic currently performed by CoreXT -->
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="CreateBuildVersion">
+    <XmlPeek XmlInputPath="$(AssemblyVersionDefinitionFile)"
+      Query="/root/versions/version[@name='filever']/@value">
+      <Output TaskParameter="Result" PropertyName="BuildVersion" />
+      <Output TaskParameter="Result" PropertyName="ProductVersion" />
+    </XmlPeek>
+  </Target>
+  <Target Name="GenerateVersionFile"
+          AfterTargets="Restore"
+          DependsOnTargets="CreateBuildVersion;Restore"
+          Inputs="$(AssemblyVersionDefinitionFile)"
+          Outputs="$(CONFROOT)\.inc\bldver.h">
+    <XmlPeek XmlInputPath="$(AssemblyVersionDefinitionFile)"
+      Query="/root/versions/version[@name='filever']/@value">
+      <Output TaskParameter="Result" PropertyName="BuildVersion" />
+      <Output TaskParameter="Result" PropertyName="ProductVersion" />
+    </XmlPeek>
+    <Message Text="Generating version file using $(BuildVersion)" />
+     <Exec Command="$(WINDIR)\System32\WindowsPowerShell\v1.0\powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command $(EnlistmentRoot)\build\Versions\ProcessVersionFiles.ps1 -Version $(BuildVersion) -COREXTBRANCH $(COREXTBRANCH) -SourceFolder $(EnlistmentRoot)\build\Versions -DestinationFolder $(CONFROOT)\.inc" />
+  </Target>
+  <Target Name="CreateAssemblyVersion" AfterTargets="CreateBuildVersion" DependsOnTargets="CreateBuildVersion">
+    <PropertyGroup>
+      <Version>$(BuildVersion)</Version>
+      <PackageVersion>$(BuildVersion)</PackageVersion>
+    </PropertyGroup>
+  </Target>  
+<!-- 
+     Inject AssemblyProperties here for all hybrid projects until we convert them to .NET standard and unify versioning strategy across different systems. 
+     Ensures parity with CoreXT.
+  -->
+
+  <Target Name="PrepareAssemblyAttributes"
+    AfterTargets="CreateAssemblyVersion"
+    DependsOnTargets="CreateAssemblyVersion">
+
+    <!-- 
+      Need to skip ClsCompliant and ComVisible attributes
+      because any non-string property value will cause a build error on clean msbuild.
+      CoreXT modifes the implementation on the WriteCodeFragment task that ends up being used here and
+      tries to parse any string to boolean value, wher as the original implementation does not.
+      We can add a workaround if needed before transition to .NET standard.
+    -->
+    <PropertyGroup>
+      <SkipAssemblyClsCompliant>true</SkipAssemblyClsCompliant>
+      <SkipAssemblyComVisible>true</SkipAssemblyComVisible>
+    </PropertyGroup>
+
+    <!-- Makes .NET use the generated assembly properties -->
+    <PropertyGroup>
+      <!-- Workaround for custom projects which do not specify a language -->
+      <Language Condition="'$(Language)' == ''">C#</Language>
+      <GenerateAdditionalSources>true</GenerateAdditionalSources>
+    </PropertyGroup>
+    
+    <!-- Default AssemblyAttributes -->
+    <PropertyGroup>
+      <_NoDefaultAssemblyComVisible>$(AssemblyComVisible)</_NoDefaultAssemblyComVisible>
+      <_NoDefaultAssemblyClsCompliant>$(AssemblyClsCompliant)</_NoDefaultAssemblyClsCompliant>
+      <AssemblyComVisible Condition="'$(AssemblyComVisible)' == ''">false</AssemblyComVisible>
+      <AssemblyClsCompliant Condition="'$(AssemblyClsCompliant)' == ''">true</AssemblyClsCompliant>
+      <AssemblyVersionName Condition="'$(AssemblyVersionName)' == ''">asmver</AssemblyVersionName>
+      <AssemblyFileVersionName Condition="'$(AssemblyFileVersionName)' == ''">filever</AssemblyFileVersionName>
+      <AssemblyAttributesPath>$(IntermediateOutputPath)_generated$(DefaultLanguageSourceExtension)</AssemblyAttributesPath>
+      <AssemblyAttributesRcPath>$(IntermediateOutputPath)_generated.rc</AssemblyAttributesRcPath>
+      <AssemblyAttributesRcInclude Condition="'$(AssemblyAttributesRcInclude)'==''">"$(VERSION_PATH)\bldver.rc"</AssemblyAttributesRcInclude>
+      <!--
+      AssemblyTitle value is displayed in Explorer as Properties / Details / "File description"
+      and is used by Visual Studio's "Add Reference" dialog as "Component Name"
+    -->
+      <AssemblyTitle Condition="'$(AssemblyTitle)' == '' AND '$(UseDefaultAssemblyTitle)' != 'false'">$(AssemblyName)</AssemblyTitle>
+    </PropertyGroup>
+
+    <!-- From CoreXT build.props -->
+    <PropertyGroup>
+      <AssemblyCompany>Microsoft CoreXT</AssemblyCompany>
+      <AssemblyDescription>Microsoft CoreXT</AssemblyDescription>
+    </PropertyGroup>
+    <PropertyGroup>
+      <AssemblyCLSCompliant>false</AssemblyCLSCompliant>
+    </PropertyGroup>
+
+    <!-- CreateAssemblyVersion creates the Version property -->
+    <PropertyGroup>
+      <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
+      <_BuildVersionLength>$(Version.Split('.').Length)</_BuildVersionLength>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_BuildVersionLength)' > '0'">
+      <ProductMajorVersion>$(Version.Split('.')[0])</ProductMajorVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_BuildVersionLength)' > '1'">
+      <ProductMinorVersion>$(Version.Split('.')[1])</ProductMinorVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_BuildVersionLength)' > '2'">
+      <BuildMajorVersion>$(Version.Split('.')[2])</BuildMajorVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_BuildVersionLength)' > '3'">
+      <BuildMinorVersion>$(Version.Split('.')[3])</BuildMinorVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(AssemblyVersion)'==''">
+      <AssemblyVersion>$(ProductMajorVersion).$(ProductMinorVersion).0.0</AssemblyVersion>
+      <_UseOverrideAssemblyVersion>true</_UseOverrideAssemblyVersion>
+    </PropertyGroup>
+    <PropertyGroup>
+      <ProductVersion Condition="'$(ProductVersion)'==''">$(ProductMajorVersion).$(ProductMinorVersion)</ProductVersion>
+      <BuildVersion Condition="'$(BuildVersion)'==''">$(ProductMajorVersion).$(ProductMinorVersion).$(BuildMajorVersion).$(BuildMinorVersion)</BuildVersion>
+      <_BLDVERMAJOR>16</_BLDVERMAJOR>
+      <_BLDVERMINOR>000</_BLDVERMINOR>
+      <_BLDNUMMAJOR>$(BuildMajorVersion)</_BLDNUMMAJOR>
+      <_BLDNUMMINOR>$(BuildMinorVersion)</_BLDNUMMINOR>      
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(SkipInjectAssemblyDescription)' != 'true'">
+      <AdditionalAssemblyDescription Condition="'$(GitRepositoryName)' != ''" >$(GitRepositoryName)</AdditionalAssemblyDescription>
+      <AdditionalAssemblyDescription Condition="'$(GitBranchName)' != ''" >$(AdditionalAssemblyDescription) $(GitBranchName)</AdditionalAssemblyDescription>
+      <AdditionalAssemblyDescription Condition="'$(VersionCommitHash)' != ''" >$(AdditionalAssemblyDescription) ($(VersionCommitHash))</AdditionalAssemblyDescription>
+      <AssemblyDescription Condition="'$(AdditionalAssemblyDescription)'!=''">$(AdditionalAssemblyDescription) $(AssemblyDescription)</AssemblyDescription>
+      <AssemblyDescription Condition="'$(AdditionalAssemblyDescription)'==''">$(AssemblyDescription)</AssemblyDescription>
+    </PropertyGroup>
+  </Target>
+
+  <!-- copied from CoreXT -->
+  <Target Name="SetAssemblyAttributes"
+         BeforeTargets="BeforeBuild"
+         DependsOnTargets="PrepareAssemblyAttributes">
+
+    <!-- We used the old names throughout 3.5, so we'll warn about the migration for a while -->
+    <Warning Text="AssemblyAttributeComVisible has been standardized as 'AssemblyComVisible'.  Please rename your property."
+             Condition="'$(AssemblyAttributeComVisible)'!='' AND '$(_NoDefaultAssemblyComVisible)'==''"/>
+    <Warning Text="AssemblyAttributeClsCompliant has been standardized as 'AssemblyClsCompliant'.  Please rename your property."
+             Condition="'$(AssemblyAttributeClsCompliant)'!='' AND '$(_NoDefaultAssemblyClsCompliant)'==''"/>
+    <Warning Text="AllowPartiallyTrustedCallers has been standardized as 'AssemblyAllowPartiallyTrustedCallers'.  Please rename your property."
+             Condition="'$(AllowPartiallyTrustedCallers)'!='' AND '$(AssemblyAllowPartiallyTrustedCallers)'==''"/>
+    <Warning Text="ProductName has been standardized as 'AssemblyProduct'.  Please rename your property."
+             Condition="'$(ProductName)'!='' AND '$(AssemblyProduct)'==''"/>
+    <Warning Text="CopyrightText has been standardized as 'AssemblyCopyright'.  Please rename your property."
+             Condition="'$(CopyrightText)'!='' AND '$(AssemblyCopyright)'==''"/>
+    <Warning Text="CompanyName has been standardized as 'AssemblyCompany'.  Please rename your property."
+             Condition="'$(CompanyName)'!='' AND '$(AssemblyCompany)'==''"/>
+    <Warning Text="DescriptionText has been standardized as 'AssemblyDescription'.  Please rename your property."
+             Condition="'$(DescriptionText)'!='' AND '$(AssemblyDescription)'==''"/>
+    <Warning Text="TitleName has been standardized as 'AssemblyTitle'.  Please rename your property."
+             Condition="'$(TitleName)'!='' AND '$(AssemblyTitle)'==''"/>
+    <Warning Text="TrademarkName has been standardized as 'AssemblyTrademark'.  Please rename your property."
+             Condition="'$(TrademarkName)'!='' AND '$(AssemblyTrademark)'==''"/>
+    <Warning Text="AssemblyAttributeCulture has been standardized as 'AssemblyCulture'.  Please rename your property."
+             Condition="'$(AssemblyAttributeCulture)'!='' AND '$(AssemblyCulture)'==''"/>
+    <Warning Text="AssemblyAttributeConfiguration has been standardized as 'AssemblyConfiguration'.  Please rename your property."
+             Condition="'$(AssemblyAttributeConfiguration)'!='' AND '$(AssemblyConfiguration)'==''"/>
+
+    <ItemGroup>
+
+      <!-- =============================================================================================
+      ** Common AssemblyInfo file generation settings
+      **
+      ** Unicode Character Index : http://www.unicode.org/charts/charindex.html
+      ** Unicode Display Glyph Chart: http://www.unicode.org/charts/PDF/U0080.pdf
+      ** Use the above URLs to find code point values for all characters including special symbols used here
+      ** Symbol: Name = Copyright, Unicode Point Value = 0x00A9
+      ** Symbol: Name = Registered, Unicode Point Value = 0x00AE
+      ** Symbol: Name = Trademark, Unicode Point Value = 0x2122
+      ** Example: <CompanyName>Microsoft&#x00AE; Corporation</CompanyName>
+    -->
+
+      <!-- 
+      ** We provide a switch for ComVisible and CLSCompliant attributes so that they can be disabled 
+      ** when compiling Script# projects where these types are missing.
+    -->
+      <AssemblyAttributes Include="System.Runtime.InteropServices.ComVisible" Condition="'$(SkipAssemblyComVisible)' != 'true'">
+        <_Parameter1>$(AssemblyComVisible)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.CLSCompliant" Condition="'$(SkipAssemblyClsCompliant)' != 'true'">
+        <_Parameter1>$(AssemblyClsCompliant)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Security.AllowPartiallyTrustedCallers"  Condition="'$(AssemblyAllowPartiallyTrustedCallers)' == 'true' AND  '$(IsSmartDeviceProject)' != 'true'" />
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyProduct" Condition="'$(AssemblyProduct)' != ''">
+        <_Parameter1>$(AssemblyProduct)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyCopyright" Condition="'$(AssemblyCopyright)' != ''">
+        <_Parameter1>$(AssemblyCopyright)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyCompany" Condition="'$(AssemblyCompany)' != ''">
+        <_Parameter1>$(AssemblyCompany)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyDescription" Condition="'$(AssemblyDescription)' != ''" >
+        <_Parameter1>$(AssemblyDescription)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyTitle" Condition="'$(AssemblyTitle)' != ''" >
+        <_Parameter1>$(AssemblyTitle)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyTrademark" Condition="'$(AssemblyTrademark)' != ''" >
+        <_Parameter1>$(AssemblyTrademark)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyCulture" Condition="'$(AssemblyCulture)' != ''" >
+        <_Parameter1>$(AssemblyCulture)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyConfiguration" Condition="'$(AssemblyConfiguration)' != ''" >
+        <_Parameter1>$(AssemblyConfiguration)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyVersion" Condition="'$(AssemblyVersion)' != ''" >
+        <_Parameter1>$(AssemblyVersion)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Reflection.AssemblyInformationalVersion" Condition="'$(AssemblyInformationalVersion)' != ''" >
+        <_Parameter1>$(AssemblyInformationalVersion)</_Parameter1>
+      </AssemblyAttributes>
+
+      <AssemblyAttributes Include="System.Resources.NeutralResourcesLanguage" Condition="'$(AssemblyNeutralResourcesLanguage)' != ''" >
+        <_Parameter1>$(AssemblyNeutralResourcesLanguage)</_Parameter1>
+      </AssemblyAttributes>
+
+      <!-- CompactFramework does not support AssemblyFileVersion attribute -->
+      <AssemblyAttributes Include="System.Reflection.AssemblyFileVersion" Condition="'$(AssemblyFileVersion)' != ''" >
+        <_Parameter1>$(AssemblyFileVersion)</_Parameter1>
+      </AssemblyAttributes>
+
+    </ItemGroup>
+
+  </Target>
+</Project>

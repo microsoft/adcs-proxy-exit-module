@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <BaseDir Condition=" '$(BaseDir)' == '' ">$(EnlistmentRoot)</BaseDir>
+    <SrcRoot Condition=" '$(SrcRoot)' == '' ">$(EnlistmentRoot)\src</SrcRoot>
+    <RepoRoot Condition=" '$(RepoRoot)' == '' ">$(EnlistmentRoot)</RepoRoot>
+    <Root Condition=" '$(Root)' == '' ">$(EnlistmentRoot)</Root>
+
+    <NTTREE Condition=" '$(NTTREE)' == '' ">$(EnlistmentRoot)\out\$(Configuration)-$(Platform)</NTTREE>
+    <NTTREEDBG Condition=" '$(NTTREEDBG)' == '' ">$(EnlistmentRoot)\out\$(Configuration)-$(Platform)</NTTREEDBG>
+  </PropertyGroup>
+</Project>
