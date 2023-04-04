@@ -3,8 +3,8 @@
 ###
 
 # Everything outside the src directory
-/*
-/*/
+/out
+/public
 !/src/
 /src/.packages
 

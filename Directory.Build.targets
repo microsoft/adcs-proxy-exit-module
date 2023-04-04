@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This root MSBuild file is automatically imported for all projects in the tree by MSBuild 15.0 and serves as the central entry point for MSBuild.
+  You can have a hierarchy of imports but make sure that this file is still imported.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Sdk Name="Microsoft.Build.CentralPackageVersions" />
+  <!-- Speed up incremental builds in VS and support interface-aware caching in CloudBuild -->
+  
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <Import Project="$(EnlistmentRoot)\build\Local\Extensions\Version.targets" />
+
+  <!--
+    Add CloudBuild/QuickBuild required customizations that need to be loaded for all projects
+  -->
+  <Import Project="$(EnlistmentRoot)\build\DefaultCloudBuildModifiers.props" Condition="Exists('$(EnlistmentRoot)\build\DefaultCloudBuildModifiers.props')"/>
+  <Import Project="$(EnlistmentRoot)\build\NuProj\AfterNuProj.props" Condition="Exists('$(EnlistmentRoot)\build\NuProj\AfterNuProj.props')" />
+
+  <Import Project="build\CloudServiceSchema.targets" Condition="'$(MSBuildProjectExtension)' == '.ccproj'" />
+  <Import Project="build\signing\CloudServiceSigning.targets" Condition="'$(MSBuildProjectExtension)' == '.ccproj'" />
+  <Import Project="$(EnlistmentRoot)\build\NuProj\UnifiedNugetDrop.targets" />
+
+  <Import Project="$(CacheLocalSigningTargets)"  Condition="Exists('$(CacheLocalSigningTargets)')"/>
+
+</Project>
