@@ -187,7 +187,6 @@ HRESULT CCertServerExit::GetRawCertificateProperty(
         }
 
         size_t cb = ::SysStringByteLen(var.bstrVal);
-        ATLTRACE(L"Raw cert size in bytes=%x\n", cb);
 
         if (!bufResult.Alloc(cb))
         {

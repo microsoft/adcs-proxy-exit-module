@@ -101,6 +101,23 @@ private:
 
     Abstract:
 
+        A reference buffer to an externally allocated buffer.
+
+--*/
+template<typename T>
+class CRefBuffer : public CBuffer<T>
+{
+public:
+    CRefBuffer(T* p, size_t cLength)
+        : CBuffer(p, cLength)
+    {
+    }
+};
+
+/*++
+
+    Abstract:
+
         A Heap allocated buffer.
 
     Remarks:

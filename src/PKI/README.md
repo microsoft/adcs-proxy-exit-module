@@ -3,16 +3,87 @@ This is an Exit Module that runs inproc to the certificate authority service pro
 
 ## Components
 1. ExitModule.dll - COM objects of the PMICertExit class and PMIExitModule (UI) class. 
-2. ExitModulePS.dll - Generated Proxy/stub DLL. Should be able to delete later.
+2. ExitModulePS.dll - Generated Proxy/stub DLL. Not in build. Should be able to delete later.
+
+## Design
+The exit module is a COM object that runs inside the certificate authority service and receives notifications when certs are issued. That component invokes a registered Event Processor EXE to do any further processing.
+The event processor EXE can crash and be written in managed code vs. the COM exit module that needs to be native code that runs in-proc to a critical service and even needs to handle low memory conditions.
+The exit module spawns the registered process and waits 10s for it to finish.
+The exit module COM object also exposes something called an Exit Manage Module. This is a UI component that gets loaded in MMC to allow the admin to select the exit module.
+
+### Arguments to the Event Processor EXE
+    <event processor.exe> <operation> [Options]
+    Operation:
+        certissued [CertIssuedOptions]
+    CertIssuedOptions:
+        -subjectkeyidentifier "<value>" - Hex encoded subject key identifier with spaces between the bytes.
+        -serialnumber <value> - The string for the serial number.
+        -rawcertpath <path> - A path to the raw certificate data. This is a temp file that gets deleted when the process exits.
+
+Assume new options an operations can get added in the future. Options will alway be -option [0..N args]. Look for - for the start of a new option. Ignore options that are not understood.
+Assume the options can come in at any order, but the 1st arg is always the operation.
+The event processor is expected to return an exit code of 0 to indicate success.
+Return exit code 0 for unsupported operations.
+
+### Windows Events
+TODO: Should log info for the command line for the event processor.
+TODO: Should log error if the event processor cannot start, returns a non-zero exit code, or times out.
+
+### Performance
+It reads the registry for the path to the exe each time. This lets the event processor be registered w/o restarting the service. This should be ok until we need to do 1000+ certs/second.
+The external process is launched for each cert. This should be ok given the volume.
+TODO: Consider Win32 Jobs for the event processor.
+
+### Security
+TODO: Both the exit module and event processor need to be deployed to protected directories (like Program Files). Ideally, only spfcopy or trusted installer can update.
+TODO: If the reg key for the event processor is not locked down (DACL), someone with lower priv can update and run their code as System.
+TODO: The COM registration keys for the Exit module need to be locked down.
+
+Extra Credit TODO: Only allow processes under %ProgramFiles%\PMI to get launched.
+
+### Safe Deployment
+Each build of the exit module should be copied to its own folder. This allows for rollback to an LKG build with regsvr32.
+Each build of the event processor should be copied to its own folder. This allows rollback to an LKG build by editing the registry.
+The exit module and the event processor can be shipped separately.
+Build validation can be done by issuing benign certs and looking for the correct behavior.
 
 ## Registration
-1. Each time, create a new folder for the build you are trying to register.
-2. Use regsvr32 ExitModule.dll to register the COM objects and type library. Run regsvr32 /u on the old build, not the new build. 
-3. Use MMC to select "PMI Exit Module" in the list of exit modules. This will cause the certificate services to restart. If patching an old build, restart the certificate authority service.
-4. TODO: investigate a non-UI way to register.
+Follow the sub-sections in order.
 
-## Design/Coding Decisions
+### COM Object Registration (Each build)
+1. Each time you deploy, create a new folder for the build you are trying to register.
+2. net stop CertSvc
+3. Run regsvr32 /u on the old build, not the new build. 
+4. Use regsvr32 ExitModule.dll to register the COM objects and type library. 
+5. net start CertSvc
+
+### One Time Registration
+1. Use MMC to select "PMI Exit Module" in the list of exit modules. This will cause the certificate services to restart. If patching an old build, restart the certificate authority service.
+2. TODO: investigate a non-UI way to register.
+
+### Event Processor EXE Registration
+1. Modify ExitModuleExe.reg to point to your EXE.
+2. REG IMPORT ExitModuleExe.reg /r:64
+3. No need to restart CertSvc
+
+## Debugging the Exit Module
+Prereq: Learn WinDBG and gflags.
+
+### Debugging certsrv.exe
+To get debug trace and to debug initialization:
+1. In the Services snap-in click the checkbox to enable desktop interaction and apply.
+1. launch gflags.exe and go to the image tab.
+2. Enter certsrv.exe and hit tab.
+3. For the debugger, add '<path to windbg> -g -G -server npipe:pipe=MainPipe'
+4. Restart CertSvc. Even if it doesn't start, you can go to the next step.
+5. Launch Windbg and connect to a remote. The MainPipe should show up if you search on localhost.
+6. You can see the trace output now and any exceptions. You can break in and debug what you want.
+
+## Impl/Coding Decisions
 This follows Windows Coding and Design Conventions.
+Fun fact: certsrv.exe has minimal in-proc protections for components it loads in memory. That means an AV in your COM object will not crash the entire service, but could make it very unstable (like leaks and heap corruptions).
+Fun fact: certsrv.exe runs as the System Account on the PKI server. Any security vulns lead to total compromise of the server. If that server is a domain controller, that means the whole domain.
+
 1. ATL - The implemenation uses ATL. ATL provides a lot of boilerplate for doing COM objects and is still well-supported. No need to DIY.
 2. C++ Exceptions - NOPE. This code runs in-proc to a Windows Service that is critical to the functioning of our cloud. This service must stay up even in low-memory conditions. C++ exceptions are not part of the COM contract, so each interface method would need try/catch logic. Also, if an exception cannot be handled (low-memory for example), the process will exit.
 3. COM Smart Pointers - ATL::CComPtr<> vs. _com_ip_t. CComPtr does not throw exceptions. _com_ip_t does. CComPtr is the winner.

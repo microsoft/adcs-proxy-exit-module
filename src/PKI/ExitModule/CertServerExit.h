@@ -85,7 +85,7 @@ public:
 
         Remarks:
 
-            Use for tracing or anything where a unique number is needed for the context.
+            Use for tracing or anything where a matching number is needed for the context.
     --*/
     inline LONG GetContext() const
     {
@@ -193,6 +193,52 @@ public:
             Other - error code.
     --*/
     HRESULT GetRawCertificateProperty(OUT CHeapBuffer<BYTE>& bufResult) const;
+
+    /*++
+
+        Abstract:
+
+            Gets the Subject key identifier property.
+
+        Parameters:
+
+            strResult - On success, receives the subject key identifier of the cert.
+
+        Returns:
+
+            S_OK - success.
+            Other - error code.
+    --*/
+    HRESULT GetCertificateSubjectKeyIdentifierProperty(
+        OUT CHeapWString& strResult) const
+    {
+        return GetCertificateStringProperty(
+            wszPROPCERTIFICATESUBJECTKEYIDENTIFIER, 
+            strResult);
+    }
+
+    /*++
+
+        Abstract:
+
+            Gets the serial number property.
+
+        Parameters:
+
+            strResult - On success, receives the subject key identifier of the cert.
+
+        Returns:
+
+            S_OK - success.
+            Other - error code.
+    --*/
+    HRESULT GetCertificateSerialNumberProperty(
+        OUT CHeapWString& strResult) const
+    {
+        return GetCertificateStringProperty(
+            wszPROPCERTIFICATESERIALNUMBER,
+            strResult);
+    }
 
 private:
     ATL::CComPtr<ICertServerExit> m_ptrInner;

@@ -242,15 +242,18 @@
     <ClInclude Include="CertServerExit.h" />
     <ClInclude Include="CertServerPropType.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="EventProcessor.h" />
     <ClInclude Include="ExitModule_i.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ManageProperty.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PMICertExit.h" />
     <ClInclude Include="PMIExitModule.h" />
+    <ClInclude Include="Process.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceStringManageProperty.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TempFile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CertServerExit.cpp" />
@@ -268,6 +271,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="EventProcessor.cpp" />
     <ClCompile Include="ExitModule.cpp" />
     <ClCompile Include="ExitModule_i.c">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
@@ -291,7 +295,9 @@
     </ClCompile>
     <ClCompile Include="PMICertExit.cpp" />
     <ClCompile Include="PMIExitModule.cpp" />
+    <ClCompile Include="Process.cpp" />
     <ClCompile Include="ResourceStringManageProperty.cpp" />
+    <ClCompile Include="TempFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ExitModule.rc" />

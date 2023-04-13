@@ -1,6 +1,7 @@
 // PMICertExit.cpp : Implementation of CPMICertExit
 
 #include "pch.h"
+#include "EventProcessor.h"
 #include "PMICertExit.h"
 #include "PMIExitModule.h"
 #include "CertServerExit.h"
@@ -78,6 +79,7 @@ const IID* CPMICertExit::s_rgErrorInfoInterfaces[] =
         ATLTRACE(L"m_strConfig=%s\n", m_strConfig.Get());
         ATLTRACE(L"m_strRegStorageLoc=%s\n", m_strRegStorageLoc.Get());
         ATLTRACE(L"m_eCAType=%d\n", m_eCAType);
+
     } while (false);
 
     ATLTRACE(L"Leave CPMICertExit::Initialize. hr=%x\n", hr);
@@ -181,13 +183,53 @@ HRESULT CPMICertExit::NotifyCertIssued(
 {
     HRESULT hr = S_OK;
     CHeapBuffer<BYTE> buf;
+    CHeapWString strSubjectKeyIdentifier;
+    CHeapWString strSerialNumber;
+    CEventProcessor objEventProcessor;
 
     do
     {
+        hr = objServer.GetCertificateSubjectKeyIdentifierProperty(OUT strSubjectKeyIdentifier);
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"CCertServerExit::GetCertificateSubjectKeyIdentifierProperty failed, hr=%x\n");
+            break;
+        }
+
+        hr = objServer.GetCertificateSerialNumberProperty(OUT strSerialNumber);
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"CCertServerExit::GetCertificateSerialNumberProperty failed, hr=%x\n", hr);
+            break;
+        }
+
         hr = objServer.GetRawCertificateProperty(OUT buf);
         if (FAILED(hr))
         {
             ATLTRACE(L"CCertServerExit::GetRawCertificateProperty failed, hr=%x\n", hr);
+            break;
+        }
+
+        ATLTRACE(
+            L"Cert created. Subject Key Identifier=[%s], SerialNumber=[%s]\n",
+            strSubjectKeyIdentifier.Get(),
+            strSerialNumber.Get());
+        ATLTRACE(L"Raw cert size in bytes=%x\n", buf.GetSize());
+
+        hr = objEventProcessor.Init();
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"CEventProcessor::Init failed, hr=%x\n", hr);
+            break;
+        }
+
+        hr = objEventProcessor.NotifyCertIssued(
+            strSubjectKeyIdentifier.Get(),
+            strSerialNumber.Get(),
+            buf);
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"CEventProcessor::NotifyCertIssued failed, hr=%x\n", hr);
             break;
         }
     } while (false);
