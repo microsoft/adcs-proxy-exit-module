@@ -24,11 +24,8 @@
 #include "TempFile.h"
 #include "Process.h"
 
-LPCWSTR g_pwszRegSubkey = L"Software\\Microsoft\\PMI\\PMIExitModule";
-LPCWSTR g_pwszExePathValueName = L"ExePath";
 LPCWSTR g_pwszTempFileNamePrefix = L"PMI";
 constexpr const DWORD g_dwProcessTimeoutMSecs = 10000;
-constexpr const size_t g_cbRegValueBuffer = 1024;
 
 CEventProcessor::CEventProcessor()
 {
@@ -40,63 +37,7 @@ CEventProcessor::~CEventProcessor()
 
 HRESULT CEventProcessor::Init()
 {
-    HRESULT hr = S_OK;
-    LSTATUS lr = ERROR_SUCCESS;
-    HKEY hkeyModule = nullptr;
-    DWORD dwType = 0;
-    DWORD cbBuf = 0;
-
-    do
-    {
-        lr = ::RegOpenKeyExW(
-            HKEY_LOCAL_MACHINE,
-            g_pwszRegSubkey,
-            0,              // dwReserved
-            KEY_ENUMERATE_SUB_KEYS | KEY_EXECUTE | KEY_QUERY_VALUE,
-            &hkeyModule);
-        if (lr != ERROR_SUCCESS)
-        {
-            hr = HRESULT_FROM_WIN32(lr);
-            ATLTRACE(L"Failed to open reg key HKLM\\%s, hr=%x\n", g_pwszRegSubkey, hr);
-            break;
-        }
-
-        if (!m_strExePath.Alloc(g_cbRegValueBuffer))
-        {
-            ATLTRACE(L"Failed to alloc wchars for exe path.\n");
-            hr = E_OUTOFMEMORY;
-            break;
-        }
-        
-        cbBuf = (DWORD)m_strExePath.GetSize();
-        lr = ::RegQueryValueExW(
-            hkeyModule, 
-            g_pwszExePathValueName, 
-            NULL,           // lpdwReserved
-            &dwType,
-            (BYTE*)m_strExePath.Get(),
-            &cbBuf);
-        if (lr != ERROR_SUCCESS)
-        {
-            hr = HRESULT_FROM_WIN32(lr);
-            ATLTRACE(L"Failed to query reg value %s, hr=%x\n", g_pwszExePathValueName, hr);
-            break;
-        }
-
-        if (dwType != REG_SZ)
-        {
-            ATLTRACE(L"Expected REG_SZ, actual %d\n", dwType);
-            hr = E_UNEXPECTED;
-            break;
-        }
-    } while (false);
-
-    if (hkeyModule)
-    {
-        ::RegCloseKey(hkeyModule);
-    }
-
-    return hr;
+    return m_objConfig.Init();
 }
 
 HRESULT CEventProcessor::GetTempFilePath(
@@ -141,6 +82,8 @@ HRESULT CEventProcessor::NotifyCertIssued(
 {
     CHeapWString strTempFile;
     CTempFile objTempFile;
+    CHeapWString strEscSubjectKeyIdentifier;
+    CHeapWString strEscTempFile;
 
     HRESULT hr = GetTempFilePath(strTempFile);
     if (FAILED(hr))
@@ -173,18 +116,53 @@ HRESULT CEventProcessor::NotifyCertIssued(
 
     objTempFile.Close();
 
+    LPCWSTR pwszEscSubjectKeyIdentifier = pwszSubjectKeyIdentifier;
+    LPCWSTR pwszEscTempFile = strTempFile.Get();
+    if (m_objConfig.GetEscapeForPS())
+    {
+        hr = EscapeArgumentForPS(pwszSubjectKeyIdentifier, strEscSubjectKeyIdentifier);
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"Failed to escape subject key identifier, hr=%x\n", hr);
+            return hr;
+        }
+
+        pwszEscSubjectKeyIdentifier = strEscSubjectKeyIdentifier.Get();
+
+        hr = EscapeArgumentForPS(strTempFile.Get(), strEscTempFile);
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"Failed to escape temp file path, hr=%x\n", hr);
+            return hr;
+        }
+
+        pwszEscTempFile = strEscTempFile.Get();
+    }
+
     LPCWSTR rgpwszArgs[] =
     {
         L"certissued",
         L"-subjectkeyidentifier",
-        pwszSubjectKeyIdentifier,
+        pwszEscSubjectKeyIdentifier,
         L"-serialnumber",
         pwszSerialNumber,
         L"-rawcertpath",
-        strTempFile.Get()
+        pwszEscTempFile,
     };
 
-    CRefBuffer<LPCWSTR> bufArgs(rgpwszArgs, sizeof(rgpwszArgs) / sizeof(rgpwszArgs[0]));
+    constexpr size_t cArgs = sizeof(rgpwszArgs) / sizeof(rgpwszArgs[0]);
+    const CBuffer<LPCWSTR>& bufBaseArgs = m_objConfig.GetArguments();
+    CHeapBuffer<LPCWSTR> bufArgs;
+    if (!bufArgs.Alloc(cArgs + bufBaseArgs.GetLength()))
+    {
+        hr = E_OUTOFMEMORY;
+        ATLTRACE(L"Failed to alloc buffer for args.\n");
+        return hr;
+    }
+
+    CopyMemory(bufArgs.Get(), bufBaseArgs.Get(), bufBaseArgs.GetSize());
+    CopyMemory(bufArgs.Get() + bufBaseArgs.GetLength(), rgpwszArgs, cArgs * sizeof(LPCWSTR));
+
     DWORD dwExitCode = 0;
     hr = RunProcess(bufArgs, OUT dwExitCode);
     if (FAILED(hr) || dwExitCode != 0)
@@ -210,14 +188,14 @@ HRESULT CEventProcessor::RunProcess(
     HRESULT hr = S_OK;
     CProcess objProc;
 
-    if (m_strExePath.GetLength() == 0)
+    if (!m_objConfig.GetExePath())
     {
         ATLTRACE(L"No Process registered.\n");
         return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
     }
 
     hr = objProc.Create(
-        m_strExePath.Get(),
+        m_objConfig.GetExePath(),
         bufArgs,
         NORMAL_PRIORITY_CLASS | CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP);
     if (FAILED(hr))
@@ -245,6 +223,60 @@ HRESULT CEventProcessor::RunProcess(
         objProc.GetProcessID(),
         objProc.GetThreadID(),
         dwExitCode);
+
+    return hr;
+}
+
+HRESULT CEventProcessor::EscapeArgumentForPS(
+    LPCWSTR pwsz,
+    OUT CHeapWString& strResult)
+{
+    HRESULT hr = S_OK;
+
+    size_t cch = wcslen(pwsz) + 3;
+
+    if (!strResult.Alloc(cch))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    LPWSTR pwszResult = strResult.Get();
+
+    hr = ::StringCchCopyExW(
+        pwszResult,
+        cch,
+        L"'",
+        &pwszResult,
+        &cch,
+        STRSAFE_IGNORE_NULLS);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = ::StringCchCopyExW(
+        pwszResult,
+        cch,
+        pwsz,
+        &pwszResult,
+        &cch,
+        STRSAFE_IGNORE_NULLS);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = ::StringCchCopyExW(
+        pwszResult,
+        cch,
+        L"'",
+        &pwszResult,
+        &cch,
+        STRSAFE_IGNORE_NULLS);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
 
     return hr;
 }

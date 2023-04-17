@@ -224,7 +224,7 @@ public:
     {
         if (bstr)
         {
-            size_t cch = ::SysStringLen(bstr) + 1;
+            size_t cch = (size_t)::SysStringLen(bstr) + 1;
             if (!Alloc(cch))
             {
                 return E_OUTOFMEMORY;

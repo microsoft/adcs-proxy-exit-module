@@ -20,6 +20,8 @@
 
 --*/
 
+#include "EventProcessorConfig.h"
+
 /*++
 
     Abstract:
@@ -41,14 +43,16 @@ public:
         const CBuffer<BYTE>& bufRawCert) const;
 
 private:
-    CHeapWString m_strExePath;
+    CEventProcessorConfig m_objConfig;
 
     static HRESULT GetTempFilePath(
         OUT CHeapWString& strPath);
+    static HRESULT EscapeArgumentForPS(
+        LPCWSTR pwsz,
+        OUT CHeapWString& strResult);
     HRESULT RunProcess(
         const CBuffer<LPCWSTR>& bufArgs,
         OUT DWORD& dwExitCode) const;
-
 
     CEventProcessor(const CEventProcessor&) = delete;
     CEventProcessor& operator=(const CEventProcessor&) = delete;

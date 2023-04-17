@@ -243,6 +243,7 @@
     <ClInclude Include="CertServerPropType.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="EventProcessor.h" />
+    <ClInclude Include="EventProcessorConfig.h" />
     <ClInclude Include="ExitModule_i.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ManageProperty.h" />
@@ -272,6 +273,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="EventProcessor.cpp" />
+    <ClCompile Include="EventProcessorConfig.cpp" />
     <ClCompile Include="ExitModule.cpp" />
     <ClCompile Include="ExitModule_i.c">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
