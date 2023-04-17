@@ -110,13 +110,13 @@ extends:
               msbuildArguments: '-bl:$(REPOROOT)\out\output.binlog /nr:false'
               maximumCpuCount: true
 
-#          - task: onebranch.pipeline.signing@1 # https://aka.ms/obpipelines/signing
-#            displayName: 'Sign output'
-#            inputs:
-#              command: 'sign'
-#              signing_environment: 'azure-ado'
-#              files_to_sign: '**/*.exe;**/*.dll;**/*.ps1;**/*.psm1'
-#              search_root: '$(Build.SourcesDirectory)\out'
+          - task: onebranch.pipeline.signing@1 # https://aka.ms/obpipelines/signing
+            displayName: 'Sign output'
+            inputs:
+              command: 'sign'
+              signing_environment: 'azure-ado'
+              files_to_sign: '**/*.exe;**/*.dll;**/*.ps1;**/*.psm1'
+              search_root: '$(Build.SourcesDirectory)\out'
 
       - job: InlineCommands
         pool:
