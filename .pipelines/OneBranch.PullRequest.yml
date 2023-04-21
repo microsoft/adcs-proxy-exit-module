@@ -110,6 +110,14 @@ extends:
               configuration: 'release'
               msbuildArguments: '-bl:$(REPOROOT)\out\output.binlog /nr:false'
               maximumCpuCount: true
+              
+          - task: Powershell@2
+            displayName: 'View Drop Size'
+            inputs:
+              targetType: 'inline'
+              script: |
+                (get-childitem $(REPOROOT)\out | Measure-Object -Property Length -Sum).sum / 1Gb
+              errorActionPreference: 'continue'
 
           - task: onebranch.pipeline.signing@1 # https://aka.ms/obpipelines/signing
             displayName: 'Sign output'
@@ -118,60 +126,3 @@ extends:
               signing_environment: 'azure-ado'
               files_to_sign: '**/*.exe;**/*.dll;**/*.ps1;**/*.psm1'
               search_root: '$(Build.SourcesDirectory)\out'
-
-
-
-      - job: InlineCommands
-        pool:
-          type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
-        
-        variables:
-          ob_outputDirectory: '$(REPOROOT)\out' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-          ob_sdl_binskim_break: true # https://aka.ms/obpipelines/sdl
-          ob_sdl_cg_failOnAlert: false
-          ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}: # conditionally enable symbolsPublishing for master branch only
-            ob_symbolsPublishing_enabled: true # https://aka.ms/obpipelines/symbols
-          
-          # ob_sdl_suppression_suppressionFile: $(Build.SourcesDirectory)\.gdn\job.gdnsuppress
-
-        steps:
-          - task: UseDotNet@2
-            continueOnError: true
-            inputs:
-              packageType: 'sdk'
-              useGlobalJson: true
-              performMultiLevelLookup: true
-              
-          - task: onebranch.pipeline.version@1 # generates automatic version. For other versioning options check https://aka.ms/obpipelines/versioning
-            displayName: 'Setup BuildNumber'
-            inputs:
-              system: 'RevisionCounter'
-              major: '1'
-              minor: '0'
-              exclude_commit: true
-
-          - template: /SharedComponents/OneBranch/Steps/Prepare.MSBuild.yml@templates
-            parameters:
-              msBuildVersion: 17.0
-              msbuildInstallationPath: c:\.vs
-              includeReferenceAssemblies: 'true'
-              microsoftSdks:
-                - 'Azure/.NET SDK/v2.9'
-              
-          - task: Powershell@2
-            displayName: 'View Drop Size'
-            inputs:
-              targetType: 'inline'
-              script: |
-                (get-childitem c:\.vs | Measure-Object -Property Length -Sum).sum / 1Gb
-                msbuild $(Build.SourcesDirectory)\dirs.proj /p:configuration=release -bl:$(REPOROOT)\out\output.binlog /nr:false /p:Platform=x64
-              errorActionPreference: 'continue'
-
-          - task: Powershell@2
-            displayName: 'BuildScript'
-            inputs:
-              targetType: 'inline'
-              script: |
-                msbuild $(Build.SourcesDirectory)\dirs.proj /p:configuration=release -bl:$(REPOROOT)\out\output.binlog /nr:false /p:Platform=x64
-              errorActionPreference: 'continue'
-
