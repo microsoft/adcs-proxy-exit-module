@@ -25,9 +25,19 @@ Assume the options can come in at any order, but the 1st arg is always the opera
 The event processor is expected to return an exit code of 0 to indicate success.
 Return exit code 0 for unsupported operations.
 
+### Launching PowerShell instead of a custom EXE
+The Exit module will invoke PowerShell. To do this, update the ExePath to point to PowerShell.exe. There is a MULTI_SZ registry value for supplying static arguments ahead of the dynamic arguments provided by the exit module. The ExitModuleExe.reg
+has already been updated as an example. SampleScript.ps1 is also checked in that shows how to declare the arguments in the script.
+
 ### Windows Events
-TODO: Should log info for the command line for the event processor.
-TODO: Should log error if the event processor cannot start, returns a non-zero exit code, or times out.
+The Exit module writes events to the Windows Application Log. 
+There is an informational event when a process is launched showing the full command line for it along with process ID.
+There is an informational event when the process exits with exit code 0 indicating success.
+There is an warning message if the exit module times out wwaiting for the process to exit. It includes the path to the temp file for debugging.
+There is an error event if the process could not be launched. The error code is included and the decoded error message.
+There is an error event if the process exits with a code other than 0. It also includes the path to the temp file that gets preserved to allow debugging.
+
+See registration section.
 
 ### Performance
 It reads the registry for the path to the exe each time. This lets the event processor be registered w/o restarting the service. This should be ok until we need to do 1000+ certs/second.
@@ -50,6 +60,11 @@ Build validation can be done by issuing benign certs and looking for the correct
 ## Registration
 Follow the sub-sections in order.
 
+### Event Message DLL registration (Each build)
+TODO: This is clunky and needs a real setup.
+1. Merge ExitModuleEventLog.reg and open regedit and fixup the path to PMIExitModuleMessages.dll
+2. If you have EventViewer open, restart it. 
+
 ### COM Object Registration (Each build)
 1. Each time you deploy, create a new folder for the build you are trying to register.
 2. net stop CertSvc
@@ -64,7 +79,10 @@ Follow the sub-sections in order.
 ### Event Processor EXE Registration
 1. Modify ExitModuleExe.reg to point to your EXE.
 2. REG IMPORT ExitModuleExe.reg /r:64
+3. Update values to point to your script your local path to powershell and any other static args.
 3. No need to restart CertSvc
+
+TODO: There is a bug where the code reading REG_EXPAND_SZ needs to expand environment vars.
 
 ## Debugging the Exit Module
 Prereq: Learn WinDBG and gflags.

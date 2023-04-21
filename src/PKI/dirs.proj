@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.Build.Traversal">
   <ItemGroup>
+    <ProjectFile Include="$(MSBuildThisFileDirectory)PMIExitModuleMessages\PMIExitModuleMessages.vcxproj" />
     <ProjectFile Include="$(MSBuildThisFileDirectory)ExitModule\ExitModule.vcxproj" />
     <!-- <ProjectFile Include="$(MSBuildThisFileDirectory)ExitModulePS\ExitModulePS.vcxproj" /> -->
   </ItemGroup>

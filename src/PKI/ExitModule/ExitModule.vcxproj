@@ -54,6 +54,7 @@
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\WindowsSDKMisc.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -99,6 +100,7 @@
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -135,6 +137,7 @@
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -172,6 +175,7 @@
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -211,6 +215,7 @@
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -242,14 +247,17 @@
     <ClInclude Include="CertServerExit.h" />
     <ClInclude Include="CertServerPropType.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="EventArg.h" />
     <ClInclude Include="EventProcessor.h" />
     <ClInclude Include="EventProcessorConfig.h" />
+    <ClInclude Include="EventSource.h" />
     <ClInclude Include="ExitModule_i.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ManageProperty.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PMICertExit.h" />
     <ClInclude Include="PMIExitModule.h" />
+    <ClInclude Include="PMIExitModuleEventSource.h" />
     <ClInclude Include="Process.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ResourceStringManageProperty.h" />
@@ -272,8 +280,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="EventArg.cpp" />
     <ClCompile Include="EventProcessor.cpp" />
     <ClCompile Include="EventProcessorConfig.cpp" />
+    <ClCompile Include="EventSource.cpp" />
     <ClCompile Include="ExitModule.cpp" />
     <ClCompile Include="ExitModule_i.c">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
@@ -297,6 +307,7 @@
     </ClCompile>
     <ClCompile Include="PMICertExit.cpp" />
     <ClCompile Include="PMIExitModule.cpp" />
+    <ClCompile Include="PMIExitModuleEventSource.cpp" />
     <ClCompile Include="Process.cpp" />
     <ClCompile Include="ResourceStringManageProperty.cpp" />
     <ClCompile Include="TempFile.cpp" />
@@ -313,7 +324,14 @@
   <ItemGroup>
     <Midl Include="ExitModule.idl" />
   </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="..\PMIExitModuleMessages\PMIExitModuleMessages.mc">
+      <!-- <GeneratedHeaderPath>true</GeneratedHeaderPath>
+      <HeaderFilePath>.</HeaderFilePath> -->
+    </MessageCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="..\WindowsSDKMisc.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

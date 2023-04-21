@@ -20,6 +20,7 @@
 --*/
 
 #include "pch.h"
+#include "PMIExitModuleEventSource.h"
 #include "EventProcessor.h"
 #include "TempFile.h"
 #include "Process.h"
@@ -27,7 +28,8 @@
 LPCWSTR g_pwszTempFileNamePrefix = L"PMI";
 constexpr const DWORD g_dwProcessTimeoutMSecs = 10000;
 
-CEventProcessor::CEventProcessor()
+CEventProcessor::CEventProcessor(const CPMIExitModuleEventSource& objEventSource)
+    : m_objEventSource(objEventSource)
 {
 }
 
@@ -164,7 +166,7 @@ HRESULT CEventProcessor::NotifyCertIssued(
     CopyMemory(bufArgs.Get() + bufBaseArgs.GetLength(), rgpwszArgs, cArgs * sizeof(LPCWSTR));
 
     DWORD dwExitCode = 0;
-    hr = RunProcess(bufArgs, OUT dwExitCode);
+    hr = RunProcess(bufArgs, strTempFile.Get(), OUT dwExitCode);
     if (FAILED(hr) || dwExitCode != 0)
     {
         if (FAILED(hr))
@@ -183,6 +185,7 @@ HRESULT CEventProcessor::NotifyCertIssued(
 
 HRESULT CEventProcessor::RunProcess(
     const CBuffer<LPCWSTR>& bufArgs,
+    LPCWSTR pwszTempFile,
     OUT DWORD& dwExitCode) const
 {
     HRESULT hr = S_OK;
@@ -201,20 +204,39 @@ HRESULT CEventProcessor::RunProcess(
     if (FAILED(hr))
     {
         ATLTRACE(L"CProcess::Create failed, hr=%x\n", hr);
+        m_objEventSource.ReportProcessStartFailed(
+            m_objConfig.GetExePath(),
+            objProc.GetCommandLine(),
+            hr);
         return hr;
     }
+
+    m_objEventSource.ReportProcessStartSucceeded(
+        m_objConfig.GetExePath(),
+        objProc.GetCommandLine(),
+        objProc.GetProcessID(),
+        objProc.GetThreadID());
 
     hr = objProc.Wait(g_dwProcessTimeoutMSecs);
     if (FAILED(hr))
     {
         ATLTRACE(L"CProcess::Wait failed, hr=%x\n", hr);
+        if (hr == HRESULT_FROM_WIN32(ERROR_TIMEOUT))
+        {
+            m_objEventSource.ReportProcessTimedOut(
+                g_dwProcessTimeoutMSecs / 1000,
+                objProc.GetProcessID(),
+                objProc.GetThreadID(),
+                pwszTempFile);
+        }
+
         return hr;
     }
 
     hr = objProc.GetExitCode(OUT dwExitCode);
     if (FAILED(hr))
     {
-        ATLTRACE(L"CProcessL::GetExitCode failed, hr=%x\n", hr);
+        ATLTRACE(L"CProcess::GetExitCode failed, hr=%x\n", hr);
         return hr;
     }
 
@@ -223,6 +245,21 @@ HRESULT CEventProcessor::RunProcess(
         objProc.GetProcessID(),
         objProc.GetThreadID(),
         dwExitCode);
+    if (dwExitCode != 0)
+    {
+        m_objEventSource.ReportProcessFailed(
+            objProc.GetProcessID(),
+            objProc.GetThreadID(),
+            dwExitCode,
+            pwszTempFile);
+    }
+    else
+    {
+        m_objEventSource.ReportProcessSucceeded(
+            objProc.GetProcessID(),
+            objProc.GetThreadID(),
+            dwExitCode);
+    }
 
     return hr;
 }

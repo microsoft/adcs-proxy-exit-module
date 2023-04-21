@@ -1,6 +1,7 @@
 // PMICertExit.cpp : Implementation of CPMICertExit
 
 #include "pch.h"
+#include "PMIExitModuleEventSource.h"
 #include "EventProcessor.h"
 #include "PMICertExit.h"
 #include "PMIExitModule.h"
@@ -51,6 +52,13 @@ const IID* CPMICertExit::s_rgErrorInfoInterfaces[] =
         if (FAILED(hr))
         {
             ATLTRACE(L"Failed to copy strConfig, hr=%x\n", hr);
+            break;
+        }
+
+        hr = m_objEventSource.Open();
+        if (FAILED(hr))
+        {
+            ATLTRACE(L"Failed to register event source, hr=%x\n", hr);
             break;
         }
 
@@ -185,7 +193,7 @@ HRESULT CPMICertExit::NotifyCertIssued(
     CHeapBuffer<BYTE> buf;
     CHeapWString strSubjectKeyIdentifier;
     CHeapWString strSerialNumber;
-    CEventProcessor objEventProcessor;
+    CEventProcessor objEventProcessor(m_objEventSource);
 
     do
     {

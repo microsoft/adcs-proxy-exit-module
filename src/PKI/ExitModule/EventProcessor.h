@@ -32,7 +32,7 @@
 class CEventProcessor
 {
 public:
-    CEventProcessor();
+    CEventProcessor(const CPMIExitModuleEventSource& objEventSource);
     ~CEventProcessor();
 
     HRESULT Init();
@@ -44,6 +44,7 @@ public:
 
 private:
     CEventProcessorConfig m_objConfig;
+    const CPMIExitModuleEventSource& m_objEventSource;
 
     static HRESULT GetTempFilePath(
         OUT CHeapWString& strPath);
@@ -52,6 +53,7 @@ private:
         OUT CHeapWString& strResult);
     HRESULT RunProcess(
         const CBuffer<LPCWSTR>& bufArgs,
+        LPCWSTR pwszTempFile,
         OUT DWORD& dwExitCode) const;
 
     CEventProcessor(const CEventProcessor&) = delete;

@@ -52,7 +52,6 @@ HRESULT CProcess::Create(
     STARTUPINFOW stStartupInfo;
     ZeroMemory(&stStartupInfo, sizeof(stStartupInfo));
     stStartupInfo.cb = sizeof(PROCESS_INFORMATION);
-    CHeapBuffer<WCHAR> bufCmdLine;
 
     if (m_stProcInfo.hProcess != INVALID_HANDLE_VALUE)
     {
@@ -60,7 +59,7 @@ HRESULT CProcess::Create(
         return HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
     }
 
-    if (!bufCmdLine.Alloc(g_cchMaxCommandLine))
+    if (!m_bufCmdLine.Alloc(g_cchMaxCommandLine))
     {
         ATLTRACE(L"Failed to alloc buffer for command line.\n");
         return E_OUTOFMEMORY;
@@ -69,7 +68,7 @@ HRESULT CProcess::Create(
     hr = FormatCommandLine(
         pwszApplicationName,
         bufArguments,
-        OUT bufCmdLine);
+        OUT m_bufCmdLine);
     if (FAILED(hr))
     {
         ATLTRACE("CProcess::FormatCommandLine failed, hr=%x\n", hr);
@@ -79,10 +78,10 @@ HRESULT CProcess::Create(
     ATLTRACE(
         L"Launching [%s] with [%s] command line.\n",
         pwszApplicationName,
-        bufCmdLine.Get());
+        m_bufCmdLine.Get());
     if (!CreateProcessW(
         NULL, // lpApplicationName
-        bufCmdLine.Get(), // lpCommandLine
+        m_bufCmdLine.Get(), // lpCommandLine
         NULL, // lpProcessAttributes
         NULL, // lpThreadAttributes
         FALSE, // bInheritHandles

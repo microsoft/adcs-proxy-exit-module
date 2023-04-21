@@ -94,6 +94,7 @@ private:
 	CHeapWString m_strConfig;
 	CHeapWString m_strRegStorageLoc;
 	ENUM_CATYPES m_eCAType;
+	CPMIExitModuleEventSource m_objEventSource;
 
 	HRESULT NotifyCertIssued(LONG lContext);
 	HRESULT NotifyCertPending(LONG lContext);

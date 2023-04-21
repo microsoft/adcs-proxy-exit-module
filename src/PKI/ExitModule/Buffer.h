@@ -112,6 +112,11 @@ public:
         : CBuffer(p, cLength)
     {
     }
+
+    CRefBuffer()
+        : CBuffer(nullptr, 0)
+    {
+    }
 };
 
 /*++

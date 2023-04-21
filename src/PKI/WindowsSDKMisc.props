@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- Redefine WDKBinRoot if undefined by not using a versioned WDK -->
+    <WDKBinRoot Condition="'$(WDKBinRoot)' == ''">$(WindowsSdkDir)bin</WDKBinRoot>
+    <!-- Define x86 and x64 WDK binaries roots -->
+    <WDKBinRoot_x86>$(WDKBinRoot)\x86</WDKBinRoot_x86>
+    <WDKBinRoot_x64>$(WDKBinRoot)\x64</WDKBinRoot_x64>
+  </PropertyGroup>
+
+  <!-- Define defaults for Message Compiler -->
+  <ItemDefinitionGroup>
+    <MessageCompile>
+      <GeneratedFilesBaseName      Condition="'%(MessageCompile.GeneratedFilesBaseName)'     == ''">%(Filename)</GeneratedFilesBaseName>
+      <GeneratedHeaderPath         Condition="'%(MessageCompile.GeneratedHeaderPath)'        == ''">true</GeneratedHeaderPath>
+      <HeaderFilePath              Condition="'%(MessageCompile.HeaderFilePath)'             == ''">$(IntDir)</HeaderFilePath>
+      <GeneratedRCAndMessagesPath  Condition="'%(MessageCompile.GeneratedRCAndMessagesPath)' == ''">true</GeneratedRCAndMessagesPath>
+      <RCFilePath                  Condition="'%(MessageCompile.RCFilePath)'                 == ''">$(IntDir)</RCFilePath>
+      <TrackerLogDirectory         Condition="'%(MessageCompile.TrackerLogDirectory)'        == ''">$(TLogLocation)</TrackerLogDirectory>
+	  <MinimalRebuildFromTracking  Condition="'%(MessageCompile.MinimalRebuildFromTracking)'   == ''">true</MinimalRebuildFromTracking>
+    </MessageCompile>
+  </ItemDefinitionGroup>
+
+</Project>
+

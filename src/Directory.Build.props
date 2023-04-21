@@ -23,6 +23,7 @@
 
   <PropertyGroup>
     <UniversalCRTSdkDir_10>$(UCRTContentRoot)</UniversalCRTSdkDir_10>
+    <WDKContentRoot>$(WDKContentRoot)\</WDKContentRoot>
   </PropertyGroup>
 
   <PropertyGroup>

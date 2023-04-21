@@ -66,6 +66,22 @@ public:
     
         Abstract:
 
+            Gets the full command line including the application.
+
+        Returns:
+
+            The formatted command line after a call to Create.
+
+    --*/
+    inline LPCWSTR GetCommandLine() const
+    {
+        return m_bufCmdLine.Get();
+    }
+
+    /*++
+    
+        Abstract:
+
             Creates the process.
 
         Parameters:
@@ -124,6 +140,7 @@ public:
 
 private:
     PROCESS_INFORMATION m_stProcInfo;
+    CHeapBuffer<WCHAR> m_bufCmdLine;
 
     static HRESULT FormatCommandLine(
         LPCWSTR pwszApplicationName,
