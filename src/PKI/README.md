@@ -61,9 +61,15 @@ Build validation can be done by issuing benign certs and looking for the correct
 Follow the sub-sections in order.
 
 ### Event Message DLL registration (Each build)
-TODO: This is clunky and needs a real setup.
-1. Merge ExitModuleEventLog.reg and open regedit and fixup the path to PMIExitModuleMessages.dll
-2. If you have EventViewer open, restart it. 
+
+1. Deploy PMIExitModuleMessages.dll and PMIExitModuleMessagesSetup.exe to the same folder.
+2. Run PMIExitModuleMessagesSetup.exe
+3. check %errorlevel% to make sure it is 0.
+4. If you have EventViewer open, restart it. 
+
+You can also run PMIExitModuleMessagesSetup.exe /? to see program args. 
+If the messages DLL is in a different place, you can pass the path to it as part of the args.
+To uninstall, run PMIExitModuleMessagesSetup.exe /u. You don't have to do this for each build. Each install overwrites all the previous settings.
 
 ### COM Object Registration (Each build)
 1. Each time you deploy, create a new folder for the build you are trying to register.

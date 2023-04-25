@@ -22,8 +22,9 @@
 #include "pch.h"
 #include "PMIExitModuleEventSource.h"
 #include <PMIExitModuleMessages.h>
+#include "../PMIExitModuleMessages/PMIExitModuleEventSourceDef.h"
 
-const LPCWSTR CPMIExitModuleEventSource::s_pwszProviderName = L"PMIExitModule";
+const LPCWSTR CPMIExitModuleEventSource::s_pwszProviderName = WSZ_PMIEXITMODULE_PROVIDERNAME;
 
 void CPMIExitModuleEventSource::ReportProcessSucceeded(
     DWORD dwProcessID,
