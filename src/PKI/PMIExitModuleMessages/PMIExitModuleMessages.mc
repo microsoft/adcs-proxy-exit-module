@@ -70,3 +70,11 @@ SymbolicName=MSG_PROCESS_START_FAILED
 Language=English
 Failed to start process [%1] with the following command line [%2]. HRESULT=%3. %4
 .
+
+MessageId=0x105
+Severity=Error
+Facility=System
+SymbolicName=MSG_NOTIFY_FAILED
+Language=English
+Internal error. Use internal tracing to capture more info and open a bug. ICertExit::Notify(). ExitEvent=%1, Context=%2. HRESULT=%3. %4
+.

@@ -145,6 +145,25 @@ public:
         LPCWSTR pwszCmdLine, 
         HRESULT hrError) const;
 
+    /*++
+     
+        Abstract:
+
+            Reports a message with text similar to:
+            Internal error. Use internal tracing to capture more info and open an incident. ICertExit::Notify(). ExitEvent=%1, Context=%2. HRESULT=%3. %4
+
+        Parameters:
+            
+            lExitEvent - the exit event argument passed to Notify.
+            lContext - the context argument passed to Notify.
+            hrError - the internal error code.
+
+    --*/
+    void ReportNotifyFailedInternalError(
+        LONG lExitEvent,
+        LONG lContext,
+        HRESULT hrError) const;
+
 private:
     static const LPCWSTR s_pwszProviderName;
 };

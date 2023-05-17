@@ -178,3 +178,34 @@ void CPMIExitModuleEventSource::ReportProcessStartFailed(
         ATLTRACE(L"ReportProcessStartFailed failed, hr=%x\n", hr);
     }
 }
+
+void CPMIExitModuleEventSource::ReportNotifyFailedInternalError(
+    LONG lExitEvent,
+    LONG lContext,
+    HRESULT hrError) const
+{
+    CNumericEventArg<LONG> argExitEvent(lExitEvent);
+    CNumericEventArg<LONG> argContext(lContext);
+    CNumericEventArg<HRESULT> argError(hrError);
+    CErrorMessageEventArg argErrorMessage(hrError);
+
+    CEventArg* rgArgs[] =
+    {
+        &argExitEvent,
+        &argContext,
+        &argError,
+        &argErrorMessage,
+    };
+
+    CRefBuffer<CEventArg*> bufArgs(rgArgs, sizeof(rgArgs) / sizeof(rgArgs[0]));
+    HRESULT hr = ReportEvent(
+        EVENTLOG_ERROR_TYPE,
+        GENERAL_CATEGORY,
+        MSG_NOTIFY_FAILED,
+        bufArgs,
+        CRefBuffer<BYTE>());
+    if (FAILED(hr))
+    {
+        ATLTRACE(L"ReportNotifyFailedInternalError failed, hr=%x\n", hr);
+    }
+}

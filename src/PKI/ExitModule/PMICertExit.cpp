@@ -136,8 +136,21 @@ STDMETHODIMP CPMICertExit::Notify(
         break;
 
     default:
-        // TODO: Trace.
+        ATLTRACE(
+            L"CPMICertExit::Notify: Ignoring unknown exit event, ExitEvent=%x, Context=%x",
+            ExitEvent,
+            Context);
         break;
+    }
+
+    // NOTE: Returning failure from Notify causes CertSvc to write an error event
+    // with an event id that is reused for too many active DB sessions.
+    // Instead, log a unique event and always return S_OK from Notify().
+    if (FAILED(hr))
+    {
+        ATLTRACE(L"CPMICertExit::Notify: Internal error, hr=%x\n", hr);
+        m_objEventSource.ReportNotifyFailedInternalError(ExitEvent, Context, hr);
+        hr = S_OK;
     }
 
     ATLTRACE(L"Leave CPMICertExit::Notify. hr=%x\n", hr);
