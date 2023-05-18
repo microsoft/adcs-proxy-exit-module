@@ -319,7 +319,7 @@ HRESULT CPMICertExit::NotifyCRLIssued(LONG lContext)
     HRESULT hr = obj.Init(lContext);
     if (SUCCEEDED(hr))
     {
-        hr = NotifyCertIssued(obj);
+        hr = NotifyCRLIssued(obj);
     }
 
     return hr;
