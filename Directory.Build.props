@@ -1,0 +1,131 @@
+<!--
+  This file is imported by any project that imports Microsoft.Common.props
+-->
+<Project>
+  <PropertyGroup>
+    <!--
+      Use this property for convenience to build a path starting from the root of the repository.
+    -->
+    <EnlistmentRoot>$(MSBuildThisFileDirectory.TrimEnd('\\'))</EnlistmentRoot>
+
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+
+    <!--
+      New SDK-style projects include everything in the project directory by default.  This excludes the files left by QuickBuild local builds.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);QTestLogs\**;Logs\**;QLogs\**</DefaultItemExcludes>
+
+    <!--
+      Enable restoring projects with packages.config
+    -->
+    <RestorePackagesConfig>true</RestorePackagesConfig>
+
+    <!--
+      Enable optimized NuGet restore
+    -->
+    <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+
+    <!-- Produce deterministic assemblies, requirement for ProduceReferenceAssembly -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Use ref assemblies to speed up incremental builds in VS -->
+    <ProduceReferenceAssembly Condition="'$(MSBuildProjectExtension)' == '.csproj' And '$(UsingMicrosoftNoTargetsSdk)' != 'true' ">true</ProduceReferenceAssembly>
+
+    <!-- Set version generation file location -->
+    <CONFROOT>$(EnlistmentRoot)\.config</CONFROOT>
+    <VERSION_PATH>$(CONFROOT)\.inc</VERSION_PATH>
+    <COREXTBRANCH Condition="'$(COREXTBRANCH)' == ''" >local</COREXTBRANCH>
+    <AssemblyVersionDefinitionFile>$(VERSION_PATH)\versions.xml</AssemblyVersionDefinitionFile>
+    <!-- Use _generated.cs from Version.targets and not the built in generation -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+
+  <!--
+    Import all custom build variables from CloudBuild (https://www.1eswiki.com/wiki/CloudBuild_Custom_Build_Variables)
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)__CloudBuildServiceProperties__\all.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)__CloudBuildServiceProperties__\all.props')" />
+
+  <!--
+    Import all custom build variables from Onebranch
+  -->
+<!-- This fixes an issue with sfproj not being in sync with prejects it references -->
+  <ItemDefinitionGroup Condition=" '$(BuildingInsideVisualStudio)' != 'true' And '$(Platform)' != '' And '$(MSBuildProjectExtension)' == '.sfproj'">
+    <ProjectReference>
+      <Platform>$(Platform)</Platform>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+
+<!-- Enable Azure SDK package for CloudBuild -->
+  <PropertyGroup Condition=" '$(MSBuildProjectExtension)' == '.ccproj' ">
+    <!-- Enable the Azure SDK imports for projects that end in .ccproj -->
+    <EnableMicrosoft_Azure_Sdk>true</EnableMicrosoft_Azure_Sdk>
+  </PropertyGroup>
+ 
+  <!--
+   https://docs.microsoft.com/en-us/cpp/build/reference/highentropyva-support-64-bit-aslr
+  -->
+  <PropertyGroup>
+    <HighEntropyVA>true</HighEntropyVA>
+  </PropertyGroup>
+
+  <!-- StyleCop settings -->
+  <Import Project="$(EnlistmentRoot)\build\StyleCop\StyleCop.props" />
+
+  <!-- 
+       Define the following to redirect OutputPath and OutDir to a centralized location
+       If CBT_UnifiedOutputRootDir is not defined, EnableOneBranchBuildManifest needs to be false
+  -->
+  <PropertyGroup>
+    <CBT_UnifiedOutputRootDir Condition="'$(BuildingInsideVisualStudio)' != 'true'">$(MSBuildThisFileDirectory)Out</CBT_UnifiedOutputRootDir>
+    <EnableOneBranchBuildManifest>false</EnableOneBranchBuildManifest>
+    <EnableOneBranchBuildManifest Condition="'$(CBT_UnifiedOutputRootDir)' != ''">true</EnableOneBranchBuildManifest>
+  </PropertyGroup>
+  <Import Project="$(EnlistmentRoot)\build\DefaultBuildFlavor.props" />
+
+  <Import Project="$(EnlistmentRoot)\build\build.props" />
+
+  <!-- Import default definitions for repository paths if not defined -->
+  <Import Project="$(EnlistmentRoot)\build\DefaultRepositoryVariables.props" />
+
+  <!-- Activate StagingOutput -->
+  <!-- $(StagingOutputRootPath) : The root folder to stage the outputs at, typically $(EnlistmentRoot)\out\$(Configuration)-$(Platform) -->
+  <!-- $(StagingOutputPath)     : Default is copying files to the $(MSBuildProjectName) folder under $(StagingOutputRootPath) 
+                                  Typical OutputPath for Unified Output feature is 
+                                  $(EnlistmentRoot)\out\$(Configuration)-$(Platform)\$(MSBuildProjectName) -->
+
+  <PropertyGroup>
+    <StagingOutputRootPath Condition="'$(StagingOutputRootPath)' == ''">$(EnlistmentRoot)\out\$(Configuration)-$(Platform)\</StagingOutputRootPath>
+    <StagingOutputPath>$(MSBuildProjectName)</StagingOutputPath>
+  </PropertyGroup>
+
+  <Import Project="$(EnlistmentRoot)\build\StageOutput\StageOutput.targets" />
+
+  <!-- Import custom notargets settings on notarget projects -->
+  <PropertyGroup>
+    <CustomBeforeNoTargets>$(EnlistmentRoot)\build\local\Extensions\Before.NoTargets.props</CustomBeforeNoTargets>
+  </PropertyGroup>
+
+  <!-- Enable pdbonly symbols on Release builds. Switch to "full" for legacy compatibility, if needed. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  
+  <!-- Never check in the registry for installed .NET Framework because it comes from the NuGet Package Microsoft.NETFramework.ReferenceAssemblies -->
+  <PropertyGroup>
+    <BypassFrameworkInstallChecks>True</BypassFrameworkInstallChecks>
+  </PropertyGroup>
+
+  <!--
+    The TelemetryLoggerInstallId property defines where to deploy the MSBuild telemetry logger. This
+    must be kept in sync with Directory.Build.rsp. The install path needs to change for each version
+    to avoid file locks (logger dll will be in use while building).
+  -->
+  <PropertyGroup>
+    <TelemetryLoggerInstallId>1.0.10</TelemetryLoggerInstallId>
+  </PropertyGroup>
+</Project>

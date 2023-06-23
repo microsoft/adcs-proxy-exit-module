@@ -1,0 +1,36 @@
+// ExitModule.idl : IDL source for ExitModule
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (ExitModule.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "certexit.idl";
+
+[
+	uuid(03c5878a-932c-4063-b21a-5f89f579194f),
+	version(1.0),
+]
+library ExitModuleLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(8a933dd2-ca9b-44f3-a0a1-ec5c1c860869)
+	]
+	coclass PMIExitModule
+	{
+		[default] interface ICertManageModule;
+	};
+
+	[
+		uuid(58f3c2bd-d361-46ef-a591-8ee31552647a)
+	]
+	coclass PMICertExit
+	{
+		[default] interface ICertExit2;
+	};
+};
+
+import "shobjidl.idl";
+import "shobjidl.idl";

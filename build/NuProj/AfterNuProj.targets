@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Use this target to redistribute your dependency DLLs in your NuGet -->
+  <!-- Delete this target if you wish to stop redistributing dependency DLLs -->
+  <Target Name="GetPackageFiles"
+          Returns="@(PackageFile)"
+          DependsOnTargets="GetFiles;GetFileDependencies"
+          Condition=" '$(NuprojRedistributeDependencies)' == 'true' ">
+
+      <ItemGroup>
+        <PackageFile Include="@(File)" />
+      </ItemGroup>
+  </Target>
+  
+</Project>

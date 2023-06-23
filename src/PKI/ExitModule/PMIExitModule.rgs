@@ -1,0 +1,27 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {8a933dd2-ca9b-44f3-a0a1-ec5c1c860869} = s 'PMI Cert Exit Module'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Both'
+			}
+			ProgID = s 'PMIExitModule.ExitManage.1'
+			VersionIndependentProgID = s 'PMIExitModule.ExitManage'
+			TypeLib = s '{03c5878a-932c-4063-b21a-5f89f579194f}'
+			Version = s '1.0'
+		}
+	}
+	ForceRemove PMIExitModule.ExitManage
+	{
+		CLSID = s '{8a933dd2-ca9b-44f3-a0a1-ec5c1c860869}'
+		CurVer = s 'PMIExitModule.ExitManage.1'
+	}
+	ForceRemove PMIExitModule.ExitManage.1
+	{
+		CLSID = s '{8a933dd2-ca9b-44f3-a0a1-ec5c1c860869}'
+	}
+}
