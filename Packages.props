@@ -45,6 +45,6 @@
   <ItemGroup Label="Packages to add to all projects">
     <GlobalPackageReference Include="Microsoft.Build.Artifacts" Version="2.0.35" Condition=" '$(EnableMicrosoftBuildArtifacts)' != 'false' " />
     <GlobalPackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" />
-    <GlobalPackageReference Include="Microsoft.Build.Telemetry" Version="[$(TelemetryLoggerInstallId)]" />
+<!--    <GlobalPackageReference Include="Microsoft.Build.Telemetry" Version="[$(TelemetryLoggerInstallId)]" /> -->
   </ItemGroup>
 </Project>
