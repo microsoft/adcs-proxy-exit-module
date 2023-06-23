@@ -1,0 +1,11 @@
+/Restore
+/ConsoleLoggerParameters:Verbosity=Minimal;ForceNoAlign;ShowCommandLine;summary
+/M
+/NodeReuse:false
+/bl
+/IgnoreProjectExtensions:.sln
+/p:Platform=x64
+
+# Add command-line for Microsoft.Build.Telemetry logger.
+# The logger is in a well-known location and must be kept in sync with the $(TelemetryLoggerInstallId) property.
+-distributedlogger:TelemetryLogger,%LOCALAPPDATA%\CloudBuild\MSBuildTelemetry\1.0.10\Microsoft.Build.Telemetry.dll,IsOptional*TelemetryForwardingLogger,%LOCALAPPDATA%\CloudBuild\MSBuildTelemetry\1.0.10\Microsoft.Build.Telemetry.dll

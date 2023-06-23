@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Workaround for poor DDK Support -->
+
+  <PropertyGroup>
+    <MessageCompileToolPath Condition="'$(MessageCompileToolPath)' == ''">$(WDKBinRoot)\x86\</MessageCompileToolPath>
+    <MessageCompileToolArchitecture Condition="'$(MessageCompileToolArchitecture)' == ''">Native32Bit</MessageCompileToolArchitecture>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Mc"  AssemblyFile="$(WDKContentRoot)\build\bin\Microsoft.DriverKit.Build.Tasks.16.0.dll" />
+
+  <!-- *******************************************************************************************
+        Selective Build
+       ******************************************************************************************* -->
+  <!-- The following target removes build items from the project. -->
+  <Target Name="SelectMessageCompile" DependsOnTargets="_SelectedFiles;SelectCustomBuild">
+    <ItemGroup Condition="'@(SelectedFiles)'!=''">
+      <MessageCompile Remove="@(MessageCompile)" Condition="'%(Identity)'!='@(SelectedFiles)'"/>
+
+      <!-- Force rebuild if the MessageCompile item was specifically select for build-->
+      <MessageCompile>
+        <MinimalRebuildFromTracking>false</MinimalRebuildFromTracking>
+      </MessageCompile>
+    </ItemGroup>
+  </Target>
+
+  <!-- *******************************************************************************************
+        MessageCompile
+       ******************************************************************************************* -->
+  <Target Name="MessageCompile"
+          Condition ="'@(MessageCompile)' != ''"
+          BeforeTargets="BeforeClCompile"
+          DependsOnTargets="SelectMessageCompile">
+
+    <ItemGroup>
+      <MessageCompile>
+        <!-- Force rebuild if the MessageCompile item was specifically select for build-->
+        <MinimalRebuildFromTracking   Condition="'$(BuildType)' != 'Build' or '$(ForceRebuild)' == 'true'">false</MinimalRebuildFromTracking>
+      </MessageCompile>
+    </ItemGroup>
+
+    <Mc Condition="'%(MessageCompile.ExcludedFromBuild)'!='true'"
+        AnsiInputFile                   ="%(MessageCompile.AnsiInputFile)"
+        AnsiMessageInBinFile            ="%(MessageCompile.AnsiMessageInBinFile)"
+        EnableDebugOutputPath           ="%(MessageCompile.EnableDebugOutputPath)"
+        DebugOutputPath                 ="%(MessageCompile.DebugOutputPath)"
+        EnableCalloutMacro              ="%(MessageCompile.EnableCalloutMacro)"
+        GenerateBaselineResource        ="%(MessageCompile.GenerateBaselineResource)"
+        BaselineResourcePath            ="%(MessageCompile.BaselineResourcePath)"
+        GenerateCSharpLoggingClass      ="%(MessageCompile.GenerateCSharpLoggingClass)"
+        GenerateStaticCSharpLoggingClass="%(MessageCompile.GenerateStaticCSharpLoggingClass)"
+        GeneratedFilesBaseName          ="%(MessageCompile.GeneratedFilesBaseName)"
+        GeneratedHeaderPath             ="%(MessageCompile.GeneratedHeaderPath)"
+        HeaderFilePath                  ="%(MessageCompile.HeaderFilePath)"
+        GeneratedRCAndMessagesPath      ="%(MessageCompile.GeneratedRCAndMessagesPath)"
+        RCFilePath                      ="%(MessageCompile.RCFilePath)"
+        GenerateKernelModeLoggingMacros ="%(MessageCompile.GenerateKernelModeLoggingMacros)"
+        GenerateMofFile                 ="%(MessageCompile.GenerateMofFile)"
+        GenerateOle2Header              ="%(MessageCompile.GenerateOle2Header)"
+        GenerateUserModeLoggingMacros   ="%(MessageCompile.GenerateUserModeLoggingMacros)"
+        HeaderExtension                 ="%(MessageCompile.HeaderExtension)"
+        MaximumMessageLength            ="%(MessageCompile.MaximumMessageLength)"
+        PrefixMacroName                 ="%(MessageCompile.PrefixMacroName)"
+        RemoveCharsFromSymbolName       ="%(MessageCompile.RemoveCharsFromSymbolName)"
+        SetCustomerbit                  ="%(MessageCompile.SetCustomerbit)"
+        TerminateMessageWithNull        ="%(MessageCompile.TerminateMessageWithNull)"
+        UnicodeInputFile                ="%(MessageCompile.UnicodeInputFile)"
+        UnicodeMessageInBinFile         ="%(MessageCompile.UnicodeMessageInBinFile)"
+        UseBaseNameOfInput              ="%(MessageCompile.UseBaseNameOfInput)"
+        UseDecimalValues                ="%(MessageCompile.UseDecimalValues)"
+        ValidateAgainstBaselineResource ="%(MessageCompile.ValidateAgainstBaselineResource)"
+        BaselinePath                    ="%(MessageCompile.BaselinePath)"
+        Verbose                         ="%(MessageCompile.Verbose)"
+        Sources                         ="@(MessageCompile)"
+        TrackerLogDirectory             ="%(MessageCompile.TrackerLogDirectory)"
+        AdditionalOptions               ="%(MessageCompile.AdditionalOptions)"
+        EventmanPath                    ="%(MessageCompile.EventmanPath)"
+        WinmetaPath                     ="%(MessageCompile.WinmetaPath)"
+
+        TLogReadFiles                   ="@(MessageCompileTLogReadFiles)"
+        TLogWriteFiles                  ="@(MessageCompileTLogWriteFiles)"
+        ToolExe                         ="$(MessageCompileToolExe)"
+        ToolPath                        ="$(MessageCompileToolPath)"
+        TrackFileAccess                 ="$(TrackFileAccess)"
+        MinimalRebuildFromTracking      ="%(MessageCompile.MinimalRebuildFromTracking)"
+        ToolArchitecture                ="$(MessageCompileToolArchitecture)"
+        TrackerFrameworkPath            ="$(MessageCompileTrackerFrameworkPath)"
+        TrackerSdkPath                  ="$(MessageCompileTrackerSdkPath)"
+    />
+  </Target>
+
+</Project>

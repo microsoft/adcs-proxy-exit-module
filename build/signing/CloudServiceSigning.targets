@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Customizations for .ccproj files, including:
+  1. ConfigureSchema for internal only Azure configuraiton options
+  2. Custom GetFilesToSign
+  3. Defaults to sign file extensions defined in <FilesToSignExtensions>, you can override by defining this property in your project.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <FilesToSignExtensions Condition="'$(FilesToSignExtensions)' == ''">.exe;.dll;.sys;.cat;.msu;.mui;.cab;.ctl;.ocx;.ps1xml;.ps1;.psd1;.psm1;.py;.js</FilesToSignExtensions>
+  </PropertyGroup>
+
+  <Target Name="GetFilesToSign" Condition="'$(ENABLE_PRS_DELAYSIGN)' == '1'  or '$(USE_TESTSIGN)' == 'true'" BeforeTargets="CorePublish">
+    <ItemGroup>
+      <FilesToSignItems Include="$(FilesToSignExtensions)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FilesToSign Include="$(IntermediateWebOutputPathItem)**\*%(FilesToSignItems.Identity)" />
+    </ItemGroup>
+    
+  </Target>
+</Project>

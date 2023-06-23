@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Customizations for .ccproj files, including:
+  1. ConfigureSchema for internal only Azure configuraiton options
+  2. Custom GetFilesToSign
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="SetEnvironment" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Name ParameterType="System.String" Required="true" />
+      <Value ParameterType="System.String" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            try {
+                Log.LogMessage("Setting {0}={1}", new object[] { Name, Value });
+                Environment.SetEnvironmentVariable(Name, Value, System.EnvironmentVariableTarget.Process);
+            }
+            catch  { }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="ConfigureSchema"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(_CSPACK_USE_FULL_SCHEMA_)' != 'true'">
+
+    <SetEnvironment 
+      Name="_CSPACK_USE_FULL_SCHEMA_"
+      Value="true" />
+  </Target>
+</Project>

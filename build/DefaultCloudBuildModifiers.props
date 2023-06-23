@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This props file has specific settings for CloudBuild QuickBuild engine
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
+  <!-- For ASP.NET MVC 5 projects need to define the following ItemGroup for quickbuild to properly recognize assembly generated 
+       for publishing step
+  -->
+  <PropertyGroup>
+    <_IsAspNetMvc5Project Condition="$(ProjectTypeGuids.ToLower().Contains('{349c5851-65df-11da-9384-00065b846f21}'))">true</_IsAspNetMvc5Project>
+  </PropertyGroup>
+
+  <!--
+    This is required for the _PublishedWebsites to execute. It only executes when OutDir != OutputPath, therefore adding Noop\..\ to make them appear different.
+    -->
+  <PropertyGroup Condition="'$(BuildingInsideVisualStudio)' != 'true'">
+    <!-- All of this ensures that we always publish on build, and use the .release and .debug variants of web.config. -->
+    <WebProjectOutputDirInsideProject>False</WebProjectOutputDirInsideProject>
+    <PipelineDependsOnBuild>False</PipelineDependsOnBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(_IsAspNetMvc5Project)' == 'true'">
+    <IsWebProject>true</IsWebProject>
+    <OutDir>$(OutDir)Noop\..\</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RedirectOutputToLocalBin)'=='' ">
+    <!-- If we are in vs, we want to build web applications to bin, where vs expects to find them. -->
+    <RedirectOutputToLocalBin Condition="'$(BuildingInsideVisualStudio)' == 'true' and '$(_IsAspNetMvc5Project)' == 'true'">true</RedirectOutputToLocalBin>
+    <RedirectOutputToLocalBin Condition="'$(RedirectOutputToLocalBin)'==''">false</RedirectOutputToLocalBin>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(RedirectOutputToLocalBin)'=='true'">
+    <OutputPath>bin\</OutputPath>
+    <OutDir>bin\</OutDir>
+    <TargetDir>$([MSBuild]::Escape($([System.IO.Path]::GetFullPath(`$([System.IO.Path]::Combine(`$(MSBuildProjectDirectory)`, `$(OutDir)`))`))))</TargetDir>
+    <TargetPath>$(TargetDir)$(TargetFileName)</TargetPath>
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(_IsAspNetMvc5Project)' == 'true'">
+    <QCustomOutput Include="$(IntermediateOutputPath)\$(TargetFileName)"/>
+    <QCustomOutput Include="$(IntermediateOutputPath)\$(TargetName).pdb" Condition="'$(DebugType)' == 'full' or '$(DebugType)' == 'pdbonly'"/>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+  
+  <Target Name="CopyNupkgToPublishDirectory" AfterTargets="Build" 
+          Condition=" '$(MSBuildProjectExtension)' == '.nuproj' and ('$(StagingOutputRootPath)' != '' or '$(CBTOutputRootDir)' != '')">
+
+<!-- CJC. This seems to be redundant since the two values are the same.
+    <Error Text="Using both $(StagingOutputRootPath) and $(CBTOutputRoot) were defined which may cause unwanted behavior. You can only use Staging or UnifiedOutput."
+           Condition="'$(StagingOutputRootPath)' != '' and '$(CBTOutputRootDir)' != ''" />
+-->
+  
+    <PropertyGroup>
+      <NugetPublishFolder Condition="'$(StagingOutputRootPath)' != ''">$(StagingOutputRootPath)\NuGetPackages\</NugetPublishFolder>
+      <NugetPublishFolder Condition="'$(CBTOutputRootDir)' != ''">$(CBTOutputRootDir)\NuGetPackages\</NugetPublishFolder>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Nupkgs Include="@(FileWrites)" Condition=" '%(Extension)' == '.nupkg' " />
+    </ItemGroup>
+    <Copy
+        SourceFiles="@(Nupkgs)"
+        DestinationFolder="$(NugetPublishFolder)"
+        SkipUnchangedFiles="$(SkipCopyUnchangedFiles)"
+        OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)"
+        Retries="$(CopyRetryCount)"
+        RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)"
+        UseHardlinksIfPossible="$(CreateHardLinksForCopyFilesToOutputDirectoryIfPossible)"
+        UseSymboliclinksIfPossible="$(CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible)">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites"/>
+    </Copy>
+  </Target>
+
+</Project>

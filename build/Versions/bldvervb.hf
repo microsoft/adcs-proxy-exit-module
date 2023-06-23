@@ -1,0 +1,29 @@
+imports System.Reflection
+imports System.Runtime.InteropServices
+
+'
+' if you want to use a private version file and customize this, see
+' file://samsndrop02/CoreXT-Latest/docs/corext/corext/version.htm
+'
+
+<assembly: AssemblyVersion("%ProductMajor%.%ProductMinor%.%BuildMajor%.%BuildMinor%")>
+
+<assembly: AssemblyCompany("Microsoft Corp")>
+<assembly: AssemblyProduct("Microsoft Account")>
+<assembly: AssemblyCopyright("2020")>
+
+
+#if ENABLE_CODESIGN
+
+#if ENABLE_PRS_DELAYSIGN
+<assembly: AssemblyKeyFile("%CODESIGN_KEY%")>
+<assembly: AssemblyKeyName("")>
+<assembly: AssemblyDelaySign(true)>
+#else
+<assembly: AssemblyKeyFile("%CODESIGN_TESTKEY%")>
+<assembly: AssemblyKeyName("")>
+<assembly: AssemblyDelaySign(false)>
+#end if
+
+#end if
+

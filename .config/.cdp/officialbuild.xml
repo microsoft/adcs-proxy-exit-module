@@ -1,0 +1,47 @@
+<WorkflowConfig>
+
+  <!-- These settings are specific for BuildTracker Official Builds
+       Buddy Builds and MergeValidation should be redirected to CloudBuild
+       For more information:
+       - Onboard CDP workflows for your branch:
+         https://microsoft.sharepoint.com/teams/WAG/EngSys/EngPipeline/cdp/SitePages/Onboard%20CDP%20workflows%20for%20your%20branch.aspx
+         
+       - Configure your CDP Workflows 
+         https://microsoft.sharepoint.com/teams/WAG/EngSys/EngPipeline/cdp/SitePages/Configure%20your%20CDP%20Workflows.aspx
+         
+       - BuildReq FAQ:
+         https://onebranch.visualstudio.com/Build/_wiki/wikis/Build.wiki?pagePath=/General%20FAQ/BuildReq%20FAQ&wikiVersion=GBwikiMaster
+  -->
+
+  <Imports>
+    <PathUri>src/Vsts/Definitions/OfficialBuildBT.xml</PathUri>
+  </Imports>
+  <Stages>
+    <BuildStage>
+      <MainStep>
+        <Inputs>
+          <!-- Optional override for the name of the job.
+              Example, Official Build - Full
+              Default is "Official Build" if not specified. -->
+          <JobName>Official Build - MSBuild</JobName>
+          <!-- Optional override for the Template name when auto-onboarding in BuildTracker (like for new branches).
+              Example, Official Build - Full
+              Default is "Official Build" if not specified. -->
+          <JobTemplate>Official Build - MSBuild</JobTemplate>
+          <!-- Any additional input that is not specific to the BuildStep is passed to BuildTracker.
+              This is how you specify BuildTracker Job Parameters. Example, to enable publishing Nuget packages:
+          <EnablePublish>True</EnablePublish> -->
+
+          <!-- CodeSign Settings -->
+          <!-- https://aka.ms/onebranchsign -->
+          <!-- Don't codesign by default, enable only on certain branches -->
+          <ENABLE_PRS_DELAYSIGN>0</ENABLE_PRS_DELAYSIGN>
+          <!-- true to in-build Guardian Cred Scan, false not -->
+          <Guardian_CredScan_Enabled>true</Guardian_CredScan_Enabled>
+          <!-- Break build on failed Guardian Cred Scan -->
+          <Guardian_CredScan_WarningLevel>Break</Guardian_CredScan_WarningLevel>
+        </Inputs>
+      </MainStep>
+    </BuildStage>
+  </Stages>
+</WorkflowConfig>
